@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     // Define the Dockerfile path
-                    def dockerfilePath = = "/Users/hoanguyen/.jenkins/workspace/multi-branch_dev-h/Dockerfile"
+                    def dockerfilePath = "${workspace}\\Dockerfile"
 
                     // Define the Docker image tag
                     def dockerImageTag = "my-docker-image:latest"
