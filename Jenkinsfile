@@ -1,18 +1,29 @@
 pipeline {
     agent any
+
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Define the path to your Dockerfile
-                    def dockerfilePath = "/Users/hoanguyen/.jenkins/workspace/multi-branch_dev-h/Dockerfile"
-                    
-                    // Build the Docker image with the correct Dockerfile path
-                    sh "docker build -t my-docker-image:latest -f ${dockerfilePath} ."
+                    // Define the Dockerfile path
+                    def dockerfilePath = = "/Users/hoanguyen/.jenkins/workspace/multi-branch_dev-h/Dockerfile"
+
+                    // Define the Docker image tag
+                    def dockerImageTag = "my-docker-image:latest"
+
+                    // Build the Docker image
+                    def dockerImage = docker.build(dockerImageTag, "-f ${dockerfilePath} .")
+
+                    // Push the Docker image (if needed)
+                    // dockerImage.push()
                 }
             }
         }
-        // Add other stages as needed
     }
 }
-
