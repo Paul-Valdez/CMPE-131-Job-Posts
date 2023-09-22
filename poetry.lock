@@ -75,7 +75,7 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "psycopg2"
+name = "psycopg2-binary"
 version = "2.9.7"
 description = "psycopg2 - Python-PostgreSQL Database Adapter"
 category = "main"
@@ -83,12 +83,15 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "psycopg2-binary"
-version = "2.9.7"
-description = "psycopg2 - Python-PostgreSQL Database Adapter"
+name = "python-dotenv"
+version = "1.0.0"
+description = "Read key-value pairs from a .env file and set them as environment variables"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
+
+[package.extras]
+cli = ["click (>=5.0)"]
 
 [[package]]
 name = "werkzeug"
@@ -107,7 +110,7 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "eec91824afb2184ab330c9ff29a6f55cc8acfa34257cea9cad6ee9b7152f0157"
+content-hash = "ca366fe01445c2fd2bb2f411fd924e5400670db0972c4f2a8b6684ae9f0ec758"
 
 [metadata.files]
 blinker = []
@@ -117,6 +120,6 @@ flask = []
 itsdangerous = []
 jinja2 = []
 markupsafe = []
-psycopg2 = []
 psycopg2-binary = []
+python-dotenv = []
 werkzeug = []

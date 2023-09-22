@@ -8,6 +8,7 @@ authors = ["Your Name <you@example.com>"]
 python = "^3.10"
 Flask = "^2.3.3"
 psycopg2-binary = "^2.9.7"
+python-dotenv = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 

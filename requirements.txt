@@ -1,0 +1,5 @@
+Flask              # web framework for Python
+gunicorn
+psycopg2-binary    # Postgres adapter for python
+supabase           # cloud database platform
+python-dotenv
