@@ -10,7 +10,7 @@ supabase_key = os.getenv('SUPABASE_KEY')
 supabase = create_client(supabase_url, supabase_key)
 
 app = Flask(__name__)
-
+'''
 # print all rows in jobs table with total quantity of jobs
 #data = supabase.table("jobs").select("*", count='exact').execute()
 
@@ -18,80 +18,75 @@ app = Flask(__name__)
 #data = supabase.table("jobs").insert({"title": "Accountant"}).execute()
 
 # example of updating an entry in jobs table job_id==2: location=remote, job_category="Information Technology"
-data = supabase.table("jobs").update({
-  "location": "remote",
-  "category": "Information Technology"
-}).eq("id", 2).execute()
+#data = supabase.table("jobs").update({"location": "remote","category":"Information Technology"}).eq("id", 2).execute()
 
-# print all rows in jobs table but only job_id, job_title, location columns, with total quantity of jobs
-data = supabase.table("jobs").select("id, title, location",
-                                     count='exact').execute()
-print("\n", data, "\n")
+# print all rows in jobs table with only certain columns
+data = supabase.table("jobs").select(
+  "id, title, location, responsibilities, benefits", count='exact').execute()
 
+result_data = data.data
 
+print("\n")
+for entry in result_data:
+  print("ID:", entry['id'])
+  print("Title:", entry['title'])
+  print("Location:", entry['location'])
+  print("Responsibilities:", entry.get('responsibilities', 'N/A'))
+  print("Benefits:", entry.get('benefits', 'N/A'))
+  print("\n")  # Empty line
+'''
 
 COMPANY = 'City of Williamston, Michigan'
 
-JOBS = [{
-  'id': 1,
-  'category': 'Administrative assistant',
-  'title': 'Administrative Secretary',
-  'location': 'Williamston, Michigan',
-  'salary': '$40,000.00'
-}, {
-  'id': 2,
-  'category': 'Information technology',
-  'title': 'Data Entry Clerk',
-  'location': 'Remotedly'
-}, {
-  'id': 3,
-  'category': 'Accounting',
-  'title': 'Accountant',
-  'location': 'Williamston, Michigan',
-  'salary': '$65,000.00'
-}, {
-  'id': 4,
-  'category': 'Administrative assistant',
-  'title': 'Receptionist',
-  'location': 'Williamston, Michigan',
-  'salary': '$35,000.00'
-}, {
-  'id': 5,
-  'category': 'Healthcare',
-  'title': 'Site Inspector',
-  'location': 'Williamston, Michigan',
-  'salary': '$55,000.00'
-}, {
-  'id': 6,
-  'category': 'Healthcare',
-  'title': 'Operator',
-  'location': 'Remotedly'
-}]
+
+def fetch_jobs_from_database():
+  """
+    Fetch jobs from the database using Supabase.
+    """
+  response = supabase.table("jobs").select(
+    "id, title, location, responsibilities, benefits, category, salary",
+    count='exact').execute()
+
+  if hasattr(response, 'data') and 'error' in response.data:
+    print("Error fetching data:", response.data['error'])
+    return []
+
+  # Format the salary for each job
+  for job in response.data:
+    if 'salary' in job and job['salary'] is not None:
+      job['salary'] = format_salary(job['salary'])
+
+  # Sort the jobs by their 'id' in ascending order
+  sorted_jobs = sorted(response.data, key=lambda x: x['id'])
+
+  return sorted_jobs
+
+
+def format_salary(salary):
+  try:
+    # Convert salary to float and format it without cents
+    formatted_salary = f"${float(salary):,.0f}"
+    return formatted_salary
+  except (ValueError, TypeError):
+    # Return the original salary if there's an issue formatting
+    return salary
 
 
 @app.route("/")
 def hello_world():
-  return render_template('home.html', jobs=JOBS, company_name=COMPANY)
+  jobs = fetch_jobs_from_database()
+  return render_template('home.html', jobs=jobs, company_name=COMPANY)
 
 
 @app.route("/api/jobs")
 def job_list():
-  return jsonify(JOBS)
+  jobs = fetch_jobs_from_database()
+  return jsonify(jobs)
 
-@app.route("/jobs-table")
+
+@app.route("/job-post-manager")
 def jobs_table():
-  return render_template('jobs.html')
-
-
-
-
-
-
-
-
-
-
-
+  return render_template('job-post-manager.html')
 
 
 if __name__ == "__main__":
