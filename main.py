@@ -1,5 +1,6 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 from dotenv import load_dotenv
+import base64
 
 load_dotenv()
 import os
@@ -115,11 +116,21 @@ def get_job_info(id):
   job = fetch_job_info(id)
   if request.method == "POST":
     name = request.form.get("inputName")
-    print("REQUEST: ", request)
-    print("name: ", name)
+    email = request.form.get("inputEmail")
+    linkedin = request.form.get("linkedin")
+    education = request.form.get("inputEducation")
+    experience = request.form.get("inputWorkExperience")
+    resume = request.files.get("resume")
+    resume_data = base64.b64encode(resume.read()).decode('utf-8')
+    
+    supabase.table('applicants').insert({"name": name, "email": email, "linkedin": linkedin, "education": education, "experience": experience, "job_id": id, "resume": resume_data}).execute()
+    return redirect(url_for("applied_success"))
   return render_template('application.html', job=job)
 
-
+@app.route("/applied-success")
+def applied_success():
+  return render_template('applied-success.html')
+  
 # script entry point
 if __name__ == "__main__":
-  app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+  app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=True)

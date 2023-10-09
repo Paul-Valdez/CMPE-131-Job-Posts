@@ -35,7 +35,7 @@
     {% endif %}
     <h3>Application Form</h3>
 
-    <form method="POST" class="needs-validation" novalidate>
+    <form method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
       <div class="form-group">
         <label for="inputName">Name</label>
         <input type="text" class="form-control" id="inputName" name="inputName" required>
@@ -43,24 +43,24 @@
       </div>
       <div class="form-group">
         <label for="inputEmail">Email</label>
-        <input type="email" class="form-control" id="inputEmail" required>
+        <input type="email" class="form-control" id="inputEmail" name="inputEmail" required>
         <div class="invalid-feedback">Please provide a valid email.</div>
       </div>
       <div class="form-group">
         <label for="inputLinkedIn">LinkedIn</label>
-        <input type="url" class="form-control" id="inputLinkedIn">
+        <input type="url" class="form-control" id="inputLinkedIn" name="linkedin">
       </div>
       <div class="form-group">
         <label for="inputEducation">Education</label>
-        <input type="text" class="form-control" id="inputEducation">
+        <input type="text" class="form-control" id="inputEducation" name="inputEducation">
       </div>
       <div class="form-group">
         <label for="inputWorkExperience">Work Experience</label>
-        <textarea class="form-control" id="inputWorkExperience" rows="4"></textarea>
+        <textarea class="form-control" id="inputWorkExperience" rows="4" name="inputWorkExperience"></textarea>
       </div>
       <div class="form-group">
         <label for="resume">Resume</label>
-        <input type="file" class="form-control-file" id="resume" required>
+        <input type="file" class="form-control-file" id="resume" name="resume" required>
         <div class="invalid-feedback">Please upload your resume.</div>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
