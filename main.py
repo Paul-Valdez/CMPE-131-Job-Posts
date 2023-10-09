@@ -61,6 +61,26 @@ def fetch_jobs_from_database():
 
   return sorted_jobs
 
+def fetch_job_info(job_id):
+  """
+    Fetch a job from the database using input job_id
+  """
+  response = supabase.table("jobs").select(
+        "id, title, location, responsibilities, benefits, category, salary, requirements"
+    ).eq("id", job_id).execute()
+
+  if hasattr(response, 'data') and 'error' in response.data:
+    print("Error fetching data:", response.data['error'])
+    return None
+
+  job = response.data[0] if response.data else None
+
+    # Format the salary for the job if it exists
+  if job and 'salary' in job and job['salary'] is not None:
+    job['salary'] = format_salary(job['salary'])
+
+  print("job", job)
+  return job
 
 def format_salary(salary):
   try:
@@ -83,11 +103,14 @@ def job_list():
   jobs = fetch_jobs_from_database()
   return jsonify(jobs)
 
-
 @app.route("/job-post-manager")
 def jobs_table():
   return render_template('job-post-manager.html')
 
+@app.route("/application/<int:id>", methods=['GET', 'POST'])
+def get_job_info(id):
+  job = fetch_job_info(id)
+  return render_template('application.html', job=job)
 
 # script entry point
 if __name__ == "__main__":
