@@ -35,14 +35,16 @@
     {% endif %}
     <h3>Application Form</h3>
 
-    <form method="POST">
+    <form method="POST" class="needs-validation" novalidate>
       <div class="form-group">
         <label for="inputName">Name</label>
-        <input type="text" class="form-control" id="inputName">
+        <input type="text" class="form-control" id="inputName" name="inputName" required>
+        <div class="invalid-feedback">Please provide your name.</div>
       </div>
       <div class="form-group">
         <label for="inputEmail">Email</label>
-        <input type="email" class="form-control" id="inputEmail">       
+        <input type="email" class="form-control" id="inputEmail" required>
+        <div class="invalid-feedback">Please provide a valid email.</div>
       </div>
       <div class="form-group">
         <label for="inputLinkedIn">LinkedIn</label>
@@ -58,10 +60,32 @@
       </div>
       <div class="form-group">
         <label for="resume">Resume</label>
-        <input type="file" class="form-control-file" id="resume">
+        <input type="file" class="form-control-file" id="resume" required>
+        <div class="invalid-feedback">Please upload your resume.</div>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
     </form>
     {%include 'footer.html' %}
     </div>
   </body>
+  <script>
+    (() => {
+  'use strict'
+
+  // Fetch all the forms we want to apply custom Bootstrap validation styles to
+  const forms = document.querySelectorAll('.needs-validation')
+
+  // Loop over them and prevent submission
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+  </script>
+</html>
