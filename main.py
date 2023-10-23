@@ -63,6 +63,23 @@ def fetch_jobs_from_database():
   return sorted_jobs
 
 
+def fetch_contents_from_database():
+  """
+    Fetch contents from the database using Supabase.
+    """
+  response = supabase.table("contents").select("id, description, content",
+                                               count='exact').execute()
+
+  if hasattr(response, 'data') and 'error' in response.data:
+    print("Error fetching data:", response.data['error'])
+    return []
+
+  # Sort the contents by their 'id' in ascending order
+  sorted_contents = sorted(response.data, key=lambda x: x['id'])
+
+  return sorted_contents
+
+
 def fetch_job_info(job_id):
   """
     Fetch a job from the database using input job_id
@@ -97,7 +114,11 @@ def format_salary(salary):
 @app.route("/")
 def hello_world():
   jobs = fetch_jobs_from_database()
-  return render_template('home.html', jobs=jobs, company_name=COMPANY)
+  contents = fetch_contents_from_database()
+  return render_template('home.html',
+                         jobs=jobs,
+                         contents=contents,
+                         company_name=COMPANY)
 
 
 @app.route("/api/jobs")
@@ -122,15 +143,25 @@ def get_job_info(id):
     experience = request.form.get("inputWorkExperience")
     resume = request.files.get("resume")
     resume_data = base64.b64encode(resume.read()).decode('utf-8')
-    
-    supabase.table('applicants').insert({"name": name, "email": email, "linkedin": linkedin, "education": education, "experience": experience, "job_id": id, "resume": resume_data}).execute()
+
+    supabase.table('applicants').insert({
+      "name": name,
+      "email": email,
+      "linkedin": linkedin,
+      "education": education,
+      "experience": experience,
+      "job_id": id,
+      "resume": resume_data
+    }).execute()
     return redirect(url_for("applied_success"))
   return render_template('application.html', job=job)
+
 
 @app.route("/applied-success")
 def applied_success():
   return render_template('applied-success.html')
-  
+
+
 # script entry point
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=True)
