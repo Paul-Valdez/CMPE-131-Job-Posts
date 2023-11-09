@@ -54,8 +54,10 @@ def fetch_jobs_from_database():
 
   # Format the salary for each job
   for job in response.data:
+   
     if 'salary' in job and job['salary'] is not None:
       job['salary'] = format_salary(job['salary'])
+    
 
   # Sort the jobs by their 'id' in ascending order
   sorted_jobs = sorted(response.data, key=lambda x: x['id'])
@@ -87,6 +89,7 @@ def fetch_job_info(job_id):
   response = supabase.table("jobs").select(
     "id, title, location, responsibilities, benefits, category, salary, requirements"
   ).eq("id", job_id).execute()
+  
 
   if hasattr(response, 'data') and 'error' in response.data:
     print("Error fetching data:", response.data['error'])
@@ -97,6 +100,15 @@ def fetch_job_info(job_id):
   # Format the salary for the job if it exists
   if job and 'salary' in job and job['salary'] is not None:
     job['salary'] = format_salary(job['salary'])
+
+  if 'responsibilities' in job and job['responsibilities'] is not None:
+    job['responsibilities'] = break_line(job['responsibilities'])
+  
+  if 'requirements' in job and job['requirements'] is not None:
+    job['requirements'] = break_line(job['requirements'])
+
+  if 'benefits' in job and job['benefits'] is not None:
+    job['benefits'] = break_line(job['benefits'])
 
   return job
 
@@ -110,15 +122,26 @@ def format_salary(salary):
     # Return the original salary if there's an issue formatting
     return salary
 
+def break_line(s):
+  try:
+    # Replace text in responsibilities
+    new_string = s.replace('.', '. <br>')
+    return new_string
+  except (ValueError, TypeError):
+    # Return the original string if there's an issue formatting
+    return s
 
 @app.route("/")
 def hello_world():
   jobs = fetch_jobs_from_database()
   contents = fetch_contents_from_database()
+  
   return render_template('home.html',
                          jobs=jobs,
                          contents=contents,
                          company_name=COMPANY)
+
+
 
 
 @app.route("/api/jobs")
@@ -161,7 +184,7 @@ def get_job_info(id):
 def applied_success():
   return render_template('applied-success.html')
 
-
 # script entry point
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=True)
+

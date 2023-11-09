@@ -23,16 +23,37 @@
     {% if 'location' in job %}
     <p>{{job['location']}}</p>
     {% endif %}
-    {% if 'responsibilities' in job %}
-    <div>
-    <h3>Responsibilities</h2>
-    <p>{{job['responsibilities']}}</p>
-    </div>
-    {% endif %}
-    {% if 'requirements' in job %}
-    <h3>Requirements</h3>
-    <p>{{job['requirements']}}</p>
-    {% endif %}
+      <div class="job-description">
+          <h3>Responsibilities</h3>
+          <p>{{ job['responsibilities']|safe }}</p>
+      </div>
+      <div class="job-description">
+          <h3>Requirements</h3>
+          <p>{{ job['requirements']|safe }}</p>
+      </div>
+      <div class="job-type">
+        <h3>Contract Type </h3>
+        <p>
+          {% if 'type' in job %}
+            {{ job['type']|safe }}
+          {% else %} To be discussed 
+          {% endif %} 
+        </p>
+          
+      </div>
+      <div class="job-salary">
+          <h3>Salary Range </h3>
+          <p>{{ job['salary']|safe }}</p>
+      </div>
+      <div class="job-benefits">
+      <h3>Benefits </h3>
+      <p>
+        {% if 'benefits' in job %}
+          {{ job['benefits']|safe }}
+        {% else %} To be discussed 
+        {% endif %} 
+      </p>
+
     <h3>Application Form</h3>
 
     <form method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
