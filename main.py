@@ -4,6 +4,7 @@ import base64
 
 load_dotenv()
 import os
+import sys
 from supabase import create_client
 
 supabase_url = os.getenv('SUPABASE_URL')
@@ -39,6 +40,8 @@ for entry in result_data:
 
 COMPANY = 'City of Williamston, Michigan'
 
+def signout():
+  res = supabase.auth.sign_out()
 
 def fetch_jobs_from_database():
   """
@@ -132,17 +135,41 @@ def break_line(s):
     return s
 
 @app.route("/")
+@app.route("/home")
 def hello_world():
   jobs = fetch_jobs_from_database()
   contents = fetch_contents_from_database()
+  signedIn = supabase.auth.get_user() != None
   
   return render_template('home.html',
                          jobs=jobs,
                          contents=contents,
-                         company_name=COMPANY)
+                         company_name=COMPANY,
+                         signedIn=signedIn)
 
+@app.route("/signup", methods=['GET', 'POST'])
+def signup():
+  if(request.method == "GET"):
+    return render_template("signup.html", signedIn=False)
+  if(request.method == "POST"):
+    email = request.form['email']
+    password = request.form['password']
+    res = supabase.auth.sign_up({
+      "email": email,
+      "password": password,
+    })
+    return redirect(url_for("applied-success"))
+  return redirect(url_for("home"))
+    
+@app.route("/login", methods=['POST'])
+def login():
+  # data = supabase.auth.sign_in_with_password({"email": "alifayed.h@gmail.com", "password": "password"})
+  return redirect(url_for("home"))
 
-
+@app.route("/logout", methods=['POST'])
+def logout():
+  res = supabase.auth.sign_out()
+  return redirect(url_for("applied_success"))
 
 @app.route("/api/jobs")
 def job_list():
