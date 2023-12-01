@@ -1,14 +1,14 @@
-{%include 'navbar.html' %}
 <html>
     <head>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     </head>
     <body>
+        {%include 'navbar.html' %}
         <div class="container mt-5">
           <div class="card mx-auto" style="max-width: 400px;">
             <div class="card-body">
-              <h5 class="card-title text-center">Sign Up</h5>
-              <form id="signupForm">
+              <h5 class="card-title text-center">Log In</h5>
+              <form id="loginForm">
                 <div class="mb-3">
                   <label for="email" class="form-label">Email</label>
                   <input type="email" class="form-control" id="email" name="email" required>
@@ -18,31 +18,31 @@
                   <input type="password" class="form-control" id="password" name="password" required>
                 </div>
                 <div class="text-center">
-                    <button type="button" class="btn btn-primary" onclick="submitForm()">Sign Up</button>
+                    <button type="button" class="btn btn-primary" onclick="submitForm()">Log In</button>
                 </div>
+                {% if invalidCredentials == true %}
+                <div>
+                    <br>
+                    <p class="text-danger text-center">Invalid Login Credentials</p>
+                </div>
+                {% endif %}
               </form>
             </div>
           </div>
         </div>
         <script>
           function submitForm() {
-            const formData = new FormData(document.getElementById('signupForm'));
-            const backendURL = '/signup';
+            const formData = new FormData(document.getElementById('loginForm'));
+            const backendURL = '/login';
             fetch(backendURL, {
               method: 'POST',
               body: formData,
             })
             .then(response => {
-              if (!response.ok) {
-                throw new Error('Error handling request');
-              }
               if(response.redirected) {
                 window.location.href = response.url;
               }
               return response.json();
-            })
-            .then(data => {
-              console.log('Success:', data);
             })
             .catch(error => {
               console.error('Error:', error);

@@ -6,6 +6,7 @@ load_dotenv()
 import os
 import sys
 from supabase import create_client
+import gotrue
 
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
@@ -134,12 +135,15 @@ def break_line(s):
     # Return the original string if there's an issue formatting
     return s
 
+def isSignedIn():
+  return supabase.auth.get_user() != None
+
 @app.route("/")
 @app.route("/home")
 def hello_world():
   jobs = fetch_jobs_from_database()
   contents = fetch_contents_from_database()
-  signedIn = supabase.auth.get_user() != None
+  signedIn = isSignedIn()
   
   return render_template('home.html',
                          jobs=jobs,
@@ -158,18 +162,35 @@ def signup():
       "email": email,
       "password": password,
     })
-    return redirect(url_for("applied-success"))
-  return redirect(url_for("home"))
+    return redirect(url_for("email_confirm"))
+  return redirect("/")
     
-@app.route("/login", methods=['POST'])
+@app.route("/login", methods=['GET', 'POST'])
 def login():
-  # data = supabase.auth.sign_in_with_password({"email": "alifayed.h@gmail.com", "password": "password"})
-  return redirect(url_for("home"))
+  if(request.method == "GET"):
+    if(isSignedIn() == True):
+      return redirect("/")
+    invalidCred = False if request.args.get("invalidCredentials") is None else request.args.get("invalidCredentials")
+    if(invalidCred == "True"):
+      return render_template("login.html", signedIn=False, invalidCredentials=True)
+    return render_template("login.html", signedIn=False, invalidCredentials=False)
+  email = request.form['email']
+  password = request.form['password']
+  data = supabase.auth.sign_in_with_password({
+    "email": email, 
+    "password": password
+    })
+  return redirect("/")
 
 @app.route("/logout", methods=['POST'])
 def logout():
   res = supabase.auth.sign_out()
-  return redirect(url_for("applied_success"))
+  return redirect("/")
+
+@app.route("/email-confirm")
+def email_confirm():
+  signedIn = isSignedIn()
+  return render_template("email-confirm.html", signedIn=signedIn)
 
 @app.route("/api/jobs")
 def job_list():
@@ -179,6 +200,8 @@ def job_list():
 
 @app.route("/job-post-manager")
 def jobs_table():
+  if(isSignedIn() == False):
+    return redirect("/")
   return render_template('job-post-manager.html')
 
 
@@ -204,12 +227,21 @@ def get_job_info(id):
       "resume": resume_data
     }).execute()
     return redirect(url_for("applied_success"))
+  if(isSignedIn() == False):
+    return redirect("/")
   return render_template('application.html', job=job)
 
 
 @app.route("/applied-success")
 def applied_success():
   return render_template('applied-success.html')
+
+@app.errorhandler(gotrue.errors.AuthApiError)
+def handleError(e):
+  print(e.message, flush=True)
+  if(e.message == "Invalid login credentials"):
+    return redirect(url_for("login", invalidCredentials=True))
+  return "Error"
 
 # script entry point
 if __name__ == "__main__":

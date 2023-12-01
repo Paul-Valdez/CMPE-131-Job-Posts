@@ -23,7 +23,7 @@
           {% endif %}
           {% if signedIn == false %}
           <li class="nav-item">
-            <a class="nav-link active" id="loginButton", href="">Sign In</a>
+            <a class="nav-link active" id="loginButton", href="/login">Sign In</a>
             <script>
               document.getElementById('loginButton').addEventListener('click', function() {
                   var endpoint = '/login';
@@ -32,6 +32,11 @@
                       headers: {
                           'Content-Type': 'application/json',
                       },
+                  })
+                  .then(response => {
+                    if (response.redirected) {
+                      window.location.href = response.url;
+                    }
                   })
                   .catch(error => {
                       console.error('Error:', error);
@@ -42,7 +47,7 @@
           <li class="nav-item">
             <a class="nav-link active" id="signupButton", href="/signup">Sign Up</a>
           </li>
-          {% else %}
+          {% elif signedIn == True %}
           <li class="nav-item">
             <a class="btn btn-primary" id="logoutButton", href="">Log Out</a>
             <script>
@@ -53,6 +58,11 @@
                       headers: {
                           'Content-Type': 'application/json',
                       },
+                  })
+                  .then(response => {
+                    if (response.redirected) {
+                      window.location.href = response.url;
+                    }
                   })
                   .catch(error => {
                       console.error('Error:', error);
