@@ -202,6 +202,12 @@ def job_list():
 def jobs_table():
   if(isSignedIn() == False):
     return redirect("/")
+  elif(isSignedIn() == True):
+    user = supabase.auth.get_user()
+    response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
+    if(response.data[0]['admin'] != True):
+      print('Here', flush=True)
+      return redirect("/")
   return render_template('job-post-manager.html')
 
 
