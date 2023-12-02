@@ -38,13 +38,14 @@ for entry in result_data:
 '''
 
 COMPANY = 'City of Williamston, Michigan'
+job_table = 'jobs'
+content_table = 'contents'
 
-
-def fetch_jobs_from_database():
+def fetch_jobs_from_database(job_table):
   """
     Fetch jobs from the database using Supabase.
     """
-  response = supabase.table("jobs").select(
+  response = supabase.table(job_table).select(
     "id, title, location, responsibilities, benefits, category, salary",
     count='exact').execute()
 
@@ -65,11 +66,11 @@ def fetch_jobs_from_database():
   return sorted_jobs
 
 
-def fetch_contents_from_database():
+def fetch_contents_from_database(content_table):
   """
     Fetch contents from the database using Supabase.
     """
-  response = supabase.table("contents").select("id, description, content",
+  response = supabase.table(content_table).select("id, description, content",
                                                count='exact').execute()
 
   if hasattr(response, 'data') and 'error' in response.data:
@@ -82,11 +83,11 @@ def fetch_contents_from_database():
   return sorted_contents
 
 
-def fetch_job_info(job_id):
+def fetch_job_info(job_table, job_id):
   """
     Fetch a job from the database using input job_id
   """
-  response = supabase.table("jobs").select(
+  response = supabase.table(job_table).select(
     "id, title, location, responsibilities, benefits, category, salary, requirements"
   ).eq("id", job_id).execute()
   
@@ -133,11 +134,29 @@ def break_line(s):
 
 @app.route("/")
 def hello_world():
-  jobs = fetch_jobs_from_database()
-  contents = fetch_contents_from_database()
+  jobs = fetch_jobs_from_database(job_table)
+  contents = fetch_contents_from_database(content_table)
+
+  # Get the page number from the request
+  page = request.args.get('page', 1, type=int)
+
+  # Number of jobs to show per page
+  jobs_per_page = 15
+
+  # Calculate the starting and ending indices for the current page
+  start_index = (page - 1) * jobs_per_page
+  end_index = start_index + jobs_per_page
+
+  # Slice the jobs list to get the jobs for the current page
+  jobs_for_page = jobs[start_index:end_index]
+
+  # Calculate the total number of pages
+  total_pages = (len(jobs) + jobs_per_page - 1) // jobs_per_page
   
   return render_template('home.html',
-                         jobs=jobs,
+                         jobs=jobs_for_page,
+                         total_pages=total_pages,
+                         current_page=page,
                          contents=contents,
                          company_name=COMPANY)
 
@@ -146,7 +165,7 @@ def hello_world():
 
 @app.route("/api/jobs")
 def job_list():
-  jobs = fetch_jobs_from_database()
+  jobs = fetch_jobs_from_database(job_table)
   return jsonify(jobs)
 
 
@@ -157,7 +176,7 @@ def jobs_table():
 
 @app.route("/application/<int:id>", methods=['GET', 'POST'])
 def get_job_info(id):
-  job = fetch_job_info(id)
+  job = fetch_job_info(job_table, id)
   if request.method == "POST":
     name = request.form.get("inputName")
     email = request.form.get("inputEmail")
