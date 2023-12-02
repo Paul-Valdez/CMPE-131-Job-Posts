@@ -13,20 +13,64 @@
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="/">Home</a>
           </li>
+          {% if signedIn == true and admin == true %}
           <li class="nav-item">
             <a class="nav-link" href="/job-post-manager">Job Post Manager</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" style = "color: blue" href="/#">Application Manager</a> <!–– add link here ––>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="/#" data-bs-toggle="dropdown" aria-expanded="false">Login</a> <!–– add login link here ––>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/">Profile</a></li> <!–– add link here ––>
-              <li><a class="dropdown-item" href="#">Settings</a></li> <!–– add link here ––>
-              <li><a class="dropdown-item" href="http://new.williamston-mi.us/VisitUs/ConcernsQuestions.aspx">Questions? Concerns?</a></li>
-            </ul>
+          {% endif %}
+          {% if signedIn == false %}
+          <li class="nav-item">
+            <a class="nav-link active" id="loginButton", href="/login">Sign In</a>
+            <script>
+              document.getElementById('loginButton').addEventListener('click', function() {
+                  var endpoint = '/login';
+                  fetch(endpoint, {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                      },
+                  })
+                  .then(response => {
+                    if (response.redirected) {
+                      window.location.href = response.url;
+                    }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                  });
+              });
+            </script>
           </li>
+          <li class="nav-item">
+            <a class="nav-link active" id="signupButton", href="/signup">Sign Up</a>
+          </li>
+          {% elif signedIn == True %}
+          <li class="nav-item">
+            <a class="btn btn-primary" id="logoutButton", href="">Log Out</a>
+            <script>
+              document.getElementById('logoutButton').addEventListener('click', function() {
+                  var endpoint = '/logout';
+                  fetch(endpoint, {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                      },
+                  })
+                  .then(response => {
+                    if (response.redirected) {
+                      window.location.href = response.url;
+                    }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                  });
+              });
+            </script>
+          </li>
+          {% endif %}
         </ul>
         <form role="search">
           <input class="form-control" type="search" placeholder="Search" aria-label="Search">
