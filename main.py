@@ -4,9 +4,7 @@ import base64
 
 load_dotenv()
 import os
-import sys
 from supabase import create_client
-import gotrue
 
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
@@ -40,15 +38,14 @@ for entry in result_data:
 '''
 
 COMPANY = 'City of Williamston, Michigan'
+job_table = 'jobs'
+content_table = 'contents'
 
-def signout():
-  res = supabase.auth.sign_out()
-
-def fetch_jobs_from_database():
+def fetch_jobs_from_database(job_table):
   """
     Fetch jobs from the database using Supabase.
     """
-  response = supabase.table("jobs").select(
+  response = supabase.table(job_table).select(
     "id, title, location, responsibilities, benefits, category, salary",
     count='exact').execute()
 
@@ -69,11 +66,11 @@ def fetch_jobs_from_database():
   return sorted_jobs
 
 
-def fetch_contents_from_database():
+def fetch_contents_from_database(content_table):
   """
     Fetch contents from the database using Supabase.
     """
-  response = supabase.table("contents").select("id, description, content",
+  response = supabase.table(content_table).select("id, description, content",
                                                count='exact').execute()
 
   if hasattr(response, 'data') and 'error' in response.data:
@@ -86,11 +83,11 @@ def fetch_contents_from_database():
   return sorted_contents
 
 
-def fetch_job_info(job_id):
+def fetch_job_info(job_table, job_id):
   """
     Fetch a job from the database using input job_id
   """
-  response = supabase.table("jobs").select(
+  response = supabase.table(job_table).select(
     "id, title, location, responsibilities, benefits, category, salary, requirements"
   ).eq("id", job_id).execute()
   
@@ -135,98 +132,48 @@ def break_line(s):
     # Return the original string if there's an issue formatting
     return s
 
-def is_signed_in():
-  return supabase.auth.get_user() != None
-
-def is_admin():
-  if(is_signed_in() == False):
-    return False
-  user = supabase.auth.get_user()
-  response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
-  return response.data[0]['admin'] == True
-
-
 @app.route("/")
-@app.route("/home")
 def hello_world():
-  jobs = fetch_jobs_from_database()
-  contents = fetch_contents_from_database()
-  signedIn = is_signed_in()
-  admin = is_admin()
+  jobs = fetch_jobs_from_database(job_table)
+  contents = fetch_contents_from_database(content_table)
+
+  # Get the page number from the request
+  page = request.args.get('page', 1, type=int)
+
+  # Number of jobs to show per page
+  jobs_per_page = 15
+
+  # Calculate the starting and ending indices for the current page
+  start_index = (page - 1) * jobs_per_page
+  end_index = start_index + jobs_per_page
+
+  # Slice the jobs list to get the jobs for the current page
+  jobs_for_page = jobs[start_index:end_index]
+
+  # Calculate the total number of pages
+  total_pages = (len(jobs) + jobs_per_page - 1) // jobs_per_page
   
   return render_template('home.html',
-                         jobs=jobs,
+                         jobs=jobs_for_page,
+                         total_pages=total_pages,
+                         current_page=page,
                          contents=contents,
-                         company_name=COMPANY,
-                         signedIn=signedIn,
-                         admin=admin)
-
-@app.route("/signup", methods=['GET', 'POST'])
-def signup():
-  if(request.method == "GET"):
-    return render_template("signup.html", signedIn=False)
-  if(request.method == "POST"):
-    email = request.form['email']
-    password = request.form['password']
-    res = supabase.auth.sign_up({
-      "email": email,
-      "password": password,
-    })
-    supabase.table('users').insert({
-      "email": email,
-      "admin": False
-    }).execute()
-    return redirect(url_for("email_confirm"))
-  return redirect("/")
-    
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-  if(request.method == "GET"):
-    if(is_signed_in() == True):
-      return redirect("/")
-    invalidCred = False if request.args.get("invalidCredentials") is None else request.args.get("invalidCredentials")
-    if(invalidCred == "True"):
-      return render_template("login.html", signedIn=False, invalidCredentials=True, admin=False)
-    return render_template("login.html", signedIn=False, invalidCredentials=False, admin=False)
-  email = request.form['email']
-  password = request.form['password']
-  data = supabase.auth.sign_in_with_password({
-    "email": email, 
-    "password": password
-  })
-  return redirect("/")
-
-@app.route("/logout", methods=['POST'])
-def logout():
-  res = supabase.auth.sign_out()
-  return redirect("/")
-
-@app.route("/email-confirm")
-def email_confirm():
-  if(is_signed_in() == True):
-    return redirect("/")
-  return render_template("email-confirm.html", signedIn=False, admin=False)
+                         company_name=COMPANY)
 
 @app.route("/api/jobs")
 def job_list():
-  jobs = fetch_jobs_from_database()
+  jobs = fetch_jobs_from_database(job_table)
   return jsonify(jobs)
+
 
 @app.route("/job-post-manager")
 def jobs_table():
-  if(is_signed_in() == False):
-    return redirect("/")
-  elif(is_signed_in() == True):
-    user = supabase.auth.get_user()
-    response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
-    if(response.data[0]['admin'] != True):
-      return redirect("/")
   return render_template('job-post-manager.html')
 
 
 @app.route("/application/<int:id>", methods=['GET', 'POST'])
 def get_job_info(id):
-  job = fetch_job_info(id)
+  job = fetch_job_info(job_table, id)
   if request.method == "POST":
     name = request.form.get("inputName")
     email = request.form.get("inputEmail")
@@ -246,22 +193,14 @@ def get_job_info(id):
       "resume": resume_data
     }).execute()
     return redirect(url_for("applied_success"))
-  if(is_signed_in() == False):
-    return redirect("/")
-  return render_template('application.html', job=job, signedIn=True, admin=is_admin())
+  return render_template('application.html', job=job)
 
 
 @app.route("/applied-success")
 def applied_success():
   return render_template('applied-success.html')
 
-@app.errorhandler(gotrue.errors.AuthApiError)
-def handleError(e):
-  print(e.message, flush=True)
-  if(e.message == "Invalid login credentials"):
-    return redirect(url_for("login", invalidCredentials=True))
-  return "Error"
-
 # script entry point
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=True)
+
