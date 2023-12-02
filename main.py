@@ -160,9 +160,6 @@ def hello_world():
                          contents=contents,
                          company_name=COMPANY)
 
-
-
-
 @app.route("/api/jobs")
 def job_list():
   jobs = fetch_jobs_from_database(job_table)
