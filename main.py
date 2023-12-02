@@ -162,6 +162,10 @@ def signup():
       "email": email,
       "password": password,
     })
+    supabase.table('users').insert({
+      "email": email,
+      "admin": False
+    }).execute()
     return redirect(url_for("email_confirm"))
   return redirect("/")
     
@@ -179,7 +183,7 @@ def login():
   data = supabase.auth.sign_in_with_password({
     "email": email, 
     "password": password
-    })
+  })
   return redirect("/")
 
 @app.route("/logout", methods=['POST'])
@@ -197,7 +201,6 @@ def job_list():
   jobs = fetch_jobs_from_database()
   return jsonify(jobs)
 
-
 @app.route("/job-post-manager")
 def jobs_table():
   if(isSignedIn() == False):
@@ -206,7 +209,6 @@ def jobs_table():
     user = supabase.auth.get_user()
     response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
     if(response.data[0]['admin'] != True):
-      print('Here', flush=True)
       return redirect("/")
   return render_template('job-post-manager.html')
 
