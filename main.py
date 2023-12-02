@@ -135,21 +135,31 @@ def break_line(s):
     # Return the original string if there's an issue formatting
     return s
 
-def isSignedIn():
+def is_signed_in():
   return supabase.auth.get_user() != None
+
+def is_admin():
+  if(is_signed_in() == False):
+    return False
+  user = supabase.auth.get_user()
+  response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
+  return response.data[0]['admin'] == True
+
 
 @app.route("/")
 @app.route("/home")
 def hello_world():
   jobs = fetch_jobs_from_database()
   contents = fetch_contents_from_database()
-  signedIn = isSignedIn()
+  signedIn = is_signed_in()
+  admin = is_admin()
   
   return render_template('home.html',
                          jobs=jobs,
                          contents=contents,
                          company_name=COMPANY,
-                         signedIn=signedIn)
+                         signedIn=signedIn,
+                         admin=admin)
 
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
@@ -172,12 +182,12 @@ def signup():
 @app.route("/login", methods=['GET', 'POST'])
 def login():
   if(request.method == "GET"):
-    if(isSignedIn() == True):
+    if(is_signed_in() == True):
       return redirect("/")
     invalidCred = False if request.args.get("invalidCredentials") is None else request.args.get("invalidCredentials")
     if(invalidCred == "True"):
-      return render_template("login.html", signedIn=False, invalidCredentials=True)
-    return render_template("login.html", signedIn=False, invalidCredentials=False)
+      return render_template("login.html", signedIn=False, invalidCredentials=True, admin=False)
+    return render_template("login.html", signedIn=False, invalidCredentials=False, admin=False)
   email = request.form['email']
   password = request.form['password']
   data = supabase.auth.sign_in_with_password({
@@ -193,8 +203,9 @@ def logout():
 
 @app.route("/email-confirm")
 def email_confirm():
-  signedIn = isSignedIn()
-  return render_template("email-confirm.html", signedIn=signedIn)
+  if(is_signed_in() == True):
+    return redirect("/")
+  return render_template("email-confirm.html", signedIn=False, admin=False)
 
 @app.route("/api/jobs")
 def job_list():
@@ -203,9 +214,9 @@ def job_list():
 
 @app.route("/job-post-manager")
 def jobs_table():
-  if(isSignedIn() == False):
+  if(is_signed_in() == False):
     return redirect("/")
-  elif(isSignedIn() == True):
+  elif(is_signed_in() == True):
     user = supabase.auth.get_user()
     response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
     if(response.data[0]['admin'] != True):
@@ -235,9 +246,9 @@ def get_job_info(id):
       "resume": resume_data
     }).execute()
     return redirect(url_for("applied_success"))
-  if(isSignedIn() == False):
+  if(is_signed_in() == False):
     return redirect("/")
-  return render_template('application.html', job=job)
+  return render_template('application.html', job=job, signedIn=True, admin=is_admin())
 
 
 @app.route("/applied-success")
