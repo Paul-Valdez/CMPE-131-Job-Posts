@@ -265,9 +265,7 @@ def get_job_info(id):
       "resume": resume_data
     }).execute()
     return redirect(url_for("applied_success"))
-  if(is_signed_in() == False):
-    return redirect("/")
-  return render_template('application.html', job=job, signedIn=True, admin=is_admin())
+  return render_template('application.html', job=job, signedIn=is_signed_in(), admin=is_admin())
 
 
 @app.route("/applied-success")
