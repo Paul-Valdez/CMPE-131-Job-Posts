@@ -80,5 +80,5 @@ def test_api_jobs(client):
 
 def test_job_info_page(client):
     response = client.get('/application/1')  # replace 1 with a valid job id
-    assert response.status_code == 302
+    assert response.status_code == 200
     # Add more assertions based on your expected response
