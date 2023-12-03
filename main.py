@@ -7,6 +7,7 @@ import os
 import sys
 from supabase import create_client
 import gotrue
+from gotrue.errors import AuthApiError
 
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
