@@ -5,3 +5,4 @@ supabase           # cloud database platform
 python-dotenv
 pytest
 gotrue
+gotrue==0.5.4  # Replace with the correct version
