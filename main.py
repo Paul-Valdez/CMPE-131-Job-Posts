@@ -153,9 +153,27 @@ def hello_world():
   contents = fetch_contents_from_database()
   signedIn = is_signed_in()
   admin = is_admin()
+
+  # Get the page number from the request
+  page = request.args.get('page', 1, type=int)
+
+  # Number of jobs to show per page
+  jobs_per_page = 15
+
+  # Calculate the starting and ending indices for the current page
+  start_index = (page - 1) * jobs_per_page
+  end_index = start_index + jobs_per_page
+
+  # Slice the jobs list to get the jobs for the current page
+  jobs_for_page = jobs[start_index:end_index]
+
+  # Calculate the total number of pages
+  total_pages = (len(jobs) + jobs_per_page - 1) // jobs_per_page
   
   return render_template('home.html',
-                         jobs=jobs,
+                         jobs=jobs_for_page,
+                         total_pages=total_pages,
+                         current_page=page,
                          contents=contents,
                          company_name=COMPANY,
                          signedIn=signedIn,

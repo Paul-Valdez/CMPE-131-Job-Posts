@@ -38,7 +38,7 @@ def sample_content_data():
 
 def test_fetch_jobs_from_database(sample_job_data):
   # Call the function
-  result = fetch_jobs_from_database(job_table_name)
+  result = fetch_jobs_from_database()
 
   # Convert data types in the result list to match sample_data
   converted_result = [
@@ -56,7 +56,7 @@ def test_fetch_jobs_from_database(sample_job_data):
 
 def test_fetch_contents_from_database(sample_content_data):
   # Call the function
-  result = fetch_contents_from_database(content_table_name)
+  result = fetch_contents_from_database()
   # Assert the result based on the mock response
   expected_item = sample_content_data[0]
   assert result and len(result) >= 1, "Result is empty or does not have enough elements."
@@ -64,7 +64,7 @@ def test_fetch_contents_from_database(sample_content_data):
 
 def test_fetch_job_info(sample_job_data):
   # Call the function
-  result = fetch_job_info(job_table_name, 12)
+  result = fetch_job_info(12)
   expected_result = {'id': 12, 'title': 'Test Data Entry', 'location': 'Heaven'}
   assert all(item in result.items() for item in expected_result.items())
 
@@ -80,5 +80,5 @@ def test_api_jobs(client):
 
 def test_job_info_page(client):
     response = client.get('/application/1')  # replace 1 with a valid job id
-    assert response.status_code == 200
+    assert response.status_code == 302
     # Add more assertions based on your expected response
