@@ -1,7 +1,7 @@
-Flask              # web framework for Python
-gunicorn
-psycopg2-binary    # Postgres adapter for python
-supabase           # cloud database platform
-python-dotenv
-pytest
-gotrue
+Flask==2.1.0              # web framework for Python
+gunicorn==20.1.0
+psycopg2-binary==2.9.1    # Postgres adapter for python
+supabase                 # cloud database platform
+python-dotenv==0.19.2
+pytest==7.3.0
+gotrue==0.5.4  # Replace with the correct version
