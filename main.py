@@ -1,13 +1,12 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for
 from dotenv import load_dotenv
 import base64
-
-load_dotenv()
 import os
 import sys
 from supabase import create_client
 import gotrue
 from gotrue.errors import AuthApiError
+load_dotenv()
 
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
