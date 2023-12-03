@@ -4,6 +4,8 @@ import base64
 import os
 import sys
 from supabase import create_client
+import gotrue
+from gotrue.errors import AuthApiError
 load_dotenv()
 
 supabase_url = os.getenv('SUPABASE_URL')
@@ -269,6 +271,12 @@ def get_job_info(id):
 def applied_success():
   return render_template('applied-success.html')
 
+@app.errorhandler(gotrue.errors.AuthApiError)
+def handleError(e):
+  print(e.message, flush=True)
+  if(e.message == "Invalid login credentials"):
+    return redirect(url_for("login", invalidCredentials=True))
+  return "Error"
 
 # script entry point
 if __name__ == "__main__":
