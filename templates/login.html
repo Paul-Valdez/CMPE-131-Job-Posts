@@ -20,13 +20,12 @@
                 <div class="text-center">
                     <button type="button" class="btn btn-primary" onclick="submitForm()">Log In</button>
                 </div>
-                {% if invalidCredentials == true %}
-                <div>
-                    <br>
-                    <p class="text-danger text-center">Invalid Login Credentials</p>
-                </div>
-                {% endif %}
               </form>
+              {% if errorMessage != None %}
+              <div>
+                  <p class="text-danger text-center" id="error">{{ errorMessage }}</p>
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -34,6 +33,7 @@
           function submitForm() {
             const formData = new FormData(document.getElementById('loginForm'));
             const backendURL = '/login';
+
             fetch(backendURL, {
               method: 'POST',
               body: formData,

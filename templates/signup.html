@@ -17,10 +17,17 @@
                   <label for="password" class="form-label">Password</label>
                   <input type="password" class="form-control" id="password" name="password" required>
                 </div>
+                <div class="mb-3">
+                  <label for="password" class="form-label">Confirm Password</label>
+                  <input type="password" class="form-control" id="confirm_password" name="password" required>
+                </div>
                 <div class="text-center">
                     <button type="button" class="btn btn-primary" onclick="submitForm()">Sign Up</button>
                 </div>
               </form>
+              <div>
+                <p class="text-danger text-center" id="error">{{ errorMessage }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -28,6 +35,15 @@
           function submitForm() {
             const formData = new FormData(document.getElementById('signupForm'));
             const backendURL = '/signup';
+
+            var password = document.getElementById("password"),
+             confirm_password = document.getElementById("confirm_password");
+
+            if(password.value != confirm_password.value) {
+              const element = document.getElementById("error");
+              element.innerHTML = "Passwords don't match";
+            }
+
             fetch(backendURL, {
               method: 'POST',
               body: formData,
