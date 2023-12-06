@@ -1,82 +1,127 @@
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm" aria-label="Eighth navbar example">
-    <div class="container">
-      <a class="navbar-brand" href="/">
-        <img src = "/static/Logo.jpg" alt="" width="30" height="24">
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample07" aria-controls="navbarsExample07" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+    <style>
+        /* Add glow effect to specific links */
+        .glow-link {
+            text-shadow: 0 0 10px #FF9000;
+            color: blue;
+        }
 
-      <div class="collapse navbar-collapse" id="navbarsExample07">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="/">Home</a>
-          </li>
-          {% if signedIn == true and admin == true %}
-          <li class="nav-item">
-            <a class="nav-link" href="/job-post-manager">Job Post Manager</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" style = "color: blue" href="/#">Application Manager</a> <!–– add link here ––>
-          </li>
-          {% endif %}
-          {% if signedIn == false %}
-          <li class="nav-item">
-            <a class="nav-link active" id="loginButton", href="/login">Sign In</a>
-            <script>
-              document.getElementById('loginButton').addEventListener('click', function() {
-                  var endpoint = '/login';
-                  fetch(endpoint, {
-                      method: 'POST',
-                      headers: {
-                          'Content-Type': 'application/json',
-                      },
-                  })
-                  .then(response => {
-                    if (response.redirected) {
-                      window.location.href = response.url;
-                    }
-                  })
-                  .catch(error => {
-                      console.error('Error:', error);
-                  });
-              });
-            </script>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" id="signupButton", href="/signup">Sign Up</a>
-          </li>
-          {% elif signedIn == True %}
-          <li class="nav-item">
-            <a class="btn btn-primary" id="logoutButton", href="">Log Out</a>
-            <script>
-              document.getElementById('logoutButton').addEventListener('click', function() {
-                  var endpoint = '/logout';
-                  fetch(endpoint, {
-                      method: 'POST',
-                      headers: {
-                          'Content-Type': 'application/json',
-                      },
-                  })
-                  .then(response => {
-                    if (response.redirected) {
-                      window.location.href = response.url;
-                    }
-                  })
-                  .catch(error => {
-                      console.error('Error:', error);
-                  });
-              });
-            </script>
-          </li>
-          {% endif %}
-        </ul>
-        <form role="search">
-          <input class="form-control" type="search" placeholder="Search" aria-label="Search">
-        </form>
-      </div>
-    </div>
-  </nav>
-<div style="height: 56px"></div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+        /* Change the background color of the logout button to red */
+        #logoutButton {
+          background-color: red;
+        }
+    </style>
+</head> 
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm" aria-label="Eighth navbar example">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/static/Logo.jpg" alt="" width="30" height="24">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample07" aria-controls="navbarsExample07" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarsExample07">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" id="navHome" href="/">Home</a>
+                    </li>
+
+                    {% if signedIn == true and admin == true %}
+                        <li class="nav-item">
+                            <a class="nav-link glow-link" id="navJobPostManager" href="/job-post-manager">Job Post Manager</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link glow-link" id="navJobApplicationManager" href="/job-application-manager">Job Application Manager</a>
+                        </li>
+                    {% endif %}
+
+                    {% if signedIn == false %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="navLogin" href="/login">Sign In</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" id="navSignup" href="/signup">Sign Up</a>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                {% if signedIn == true %}
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="btn btn-primary" id="logoutButton" href="">Log Out</a>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div style="height: 56px"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.getElementById('logoutButton')?.addEventListener('click', function() {
+            var endpoint = '/logout';
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        document.getElementById('loginButton')?.addEventListener('click', function() {
+            var endpoint = '/login';
+            fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Script to set active navbar link color
+        function setActiveNavLink() {
+            const currentPath = window.location.pathname;
+            const navLinks = {
+                '/': 'navHome',
+                '/job-post-manager': 'navJobPostManager',
+                '/job-application-manager': 'navJobApplicationManager',
+                '/login': 'navLogin',
+                '/signup': 'navSignup'
+            };
+            const activeNavLinkId = navLinks[currentPath];
+            if (activeNavLinkId) {
+                document.getElementById(activeNavLinkId).style.color = 'blue';
+            }
+        }
+
+        setActiveNavLink();
+    </script>
+
+</body>
+</html>

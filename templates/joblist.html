@@ -1,18 +1,23 @@
 <div class="border-bottom row" style="margin-bottom: 16px; padding-bottom: 4px">
   <div class="col-9">
-    <h4 style="color: rgb(100, 100, 100); margin-bottom: 4px">{{job['title']}}</h4>
+    <h4 style="color: rgb(0, 0, 255); margin-bottom: 4px">{{job['title']}}</h4>
      
     <div><b>Location:</b> 
       {% if job['location'] != "" %}
         {{job['location']}}
-      {% else %} To be announced
+      {% else %} To Be Determined
       {% endif %}
     </div>
-    {% if job['salary'] != None %}
-      <div><b>Salary:</b> {{job['salary']}}</div>
-    {% endif %}
+
+    <div><b>Salary:</b>
+      {% if job['salary'] != None %}
+        {{job['salary']}}
+      {% else %} To Be Determined
+      {% endif %}
+    </div>
   </div>
-  <div class="col-3">
+
+  <div class="col-3 d-flex justify-content-end">
     <a href="/application/{{job['id']}}">
       <button type="button" class="btn btn-primary">Click to apply</button>
     </a>
