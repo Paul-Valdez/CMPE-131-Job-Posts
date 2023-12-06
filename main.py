@@ -7,6 +7,7 @@ import os
 import sys
 from supabase import create_client
 import gotrue
+import postgrest
 
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
@@ -181,18 +182,22 @@ def hello_world():
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
   if(request.method == "GET"):
-    return render_template("signup.html", signedIn=False)
+    errorMessage = "" if request.args.get("errorMessage") is None else request.args.get("errorMessage")
+    return render_template("signup.html", signedIn=False, errorMessage=errorMessage)
   if(request.method == "POST"):
     email = request.form['email']
     password = request.form['password']
+    try:
+      supabase.table('users').insert({
+        "email": email,
+        "admin": False
+      }).execute()
+    except postgrest.exceptions.APIError as err:
+      return redirect(url_for("signup", signedIn=False, errorMessage="Account already exists"))
     res = supabase.auth.sign_up({
       "email": email,
       "password": password,
     })
-    supabase.table('users').insert({
-      "email": email,
-      "admin": False
-    }).execute()
     return redirect(url_for("email_confirm"))
   return redirect("/")
     
