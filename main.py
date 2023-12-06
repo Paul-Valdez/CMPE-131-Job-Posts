@@ -8,6 +8,7 @@ import gotrue
 from gotrue.errors import AuthApiError
 import psycopg2
 from psycopg2 import sql
+from datetime import datetime
 
 
 load_dotenv() # Load environment variables from .env
@@ -38,7 +39,7 @@ def fetch_jobs_from_database():
     Fetch jobs from the database using Supabase.
     """
   response = supabase.table("jobs").select(
-    "id, title, location, responsibilities, benefits, category, salary",
+    "id, title, location, type, responsibilities, benefits, category, salary, deadline",
     count='exact').execute()
 
   if hasattr(response, 'data') and 'error' in response.data:
@@ -47,15 +48,18 @@ def fetch_jobs_from_database():
 
   # Format the salary for each job
   for job in response.data:
-   
     if 'salary' in job and job['salary'] is not None:
       job['salary'] = format_salary(job['salary'])
     
 
-  # Sort the jobs by their 'id' in ascending order
-  sorted_jobs = sorted(response.data, key=lambda x: x['id'])
+  # # Sort the jobs by their 'id' in ascending order
+  # sorted_jobs = sorted(response.data, key=lambda x: x['id'])
+  # return sorted_jobs
+  
+  # Reverse the order of jobs
+  reversed_jobs = list(reversed(response.data))
 
-  return sorted_jobs
+  return reversed_jobs
 
 
 def fetch_contents_from_database():
@@ -80,7 +84,7 @@ def fetch_job_info(job_id):
     Fetch a job from the database using input job_id
   """
   response = supabase.table("jobs").select(
-    "id, title, location, responsibilities, benefits, category, salary, requirements"
+    "id, title, location, type, responsibilities, benefits, category, salary, requirements, status, created_at, updated_at, deadline"
   ).eq("id", job_id).execute()
   
 
@@ -89,6 +93,10 @@ def fetch_job_info(job_id):
     return None
 
   job = response.data[0] if response.data else None
+
+  # Return None immediately if no job is found
+  if not job:
+    return None
 
   # Format the salary for the job if it exists
   if job and 'salary' in job and job['salary'] is not None:
@@ -103,8 +111,41 @@ def fetch_job_info(job_id):
   if 'benefits' in job and job['benefits'] is not None:
     job['benefits'] = break_line(job['benefits'])
 
+  if 'created_at' in job and job['created_at'] is not None:
+    # Parse the string into a datetime object
+    # '%Y-%m-%dT%H:%M:%S.%f%z' is the format code matching your date string
+    date_obj = datetime.strptime(job['created_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
+
+    # Format the datetime object into a new string format
+    # For example, to get 'Month Day, Year - Hour:Minute AM/PM'
+    formatted_date = date_obj.strftime('%B %d, %Y - %I:%M %p')
+    job['created_at'] = formatted_date
+
+  if 'updated_at' in job and job['updated_at'] is not None:
+    date_obj = datetime.strptime(job['updated_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
+    formatted_date = date_obj.strftime('%B %d, %Y - %I:%M %p')
+    job['updated_at'] = formatted_date
+
+  if 'deadline' in job and job['deadline'] is not None:
+    # Parse the string into a datetime object
+    # '%Y-%m-%d' is the format code matching your date string (Year-Month-Day)
+    date_obj = datetime.strptime(job['deadline'], '%Y-%m-%d')
+
+    # Format the datetime object into a new string format
+    # For example, 'Month Day, Year'
+    formatted_date = date_obj.strftime('%B %d, %Y')
+    job['deadline'] = formatted_date
+
   return job
 
+def format_salary2(salary):
+  try:
+    # Convert salary to float and format it without cents
+    formatted_salary = f"${float(salary):,.0f}"
+    return formatted_salary
+  except (ValueError, TypeError):
+    # Return the original salary if there's an issue formatting
+    return salary
 
 def format_salary(salary):
   try:
@@ -136,7 +177,6 @@ def is_admin():
   user = supabase.auth.get_user()
   response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
   return response.data[0]['admin'] == True
-
 
 @app.route("/")
 @app.route("/home")
@@ -196,12 +236,12 @@ def login():
   if(request.method == "GET"):
     if(is_signed_in() == True):
       return redirect("/")
-    invalidCred = False if request.args.get("invalidCredentials") is None else request.args.get("invalidCredentials")
-    if(invalidCred == "True"):
-      return render_template("login.html", signedIn=False, invalidCredentials=True, admin=False)
-    return render_template("login.html", signedIn=False, invalidCredentials=False, admin=False)
-  email = request.form['email']
-  password = request.form['password']
+    error = None if request.args.get("errorMessage") is None else request.args.get("errorMessage")
+    if(error is not None):
+      return render_template("login.html", signedIn=False, errorMessage=error, admin=False)
+    return render_template("login.html", signedIn=False, errorMessage=None, admin=False)
+  email = request.form.get('email')
+  password = request.form.get('password')
   data = supabase.auth.sign_in_with_password({
     "email": email, 
     "password": password
@@ -259,10 +299,14 @@ def job_application_manager():
   return render_template('job-application-manager.html', signedIn = True, admin = True)
 
 
-
 @app.route("/application/<int:id>", methods=['GET', 'POST'])
 def get_job_info(id):
     job = fetch_job_info(id)
+    
+    if job is None:
+        # Handle the case when job is None, e.g., show an error message or redirect
+        return render_template('404.html'), 404
+    
     if request.method == "POST":
         name = request.form.get("inputName")
         email = request.form.get("inputEmail")
@@ -304,11 +348,21 @@ def applied_success():
 
 
 @app.errorhandler(gotrue.errors.AuthApiError)
-def handleError(e):
+def handleAuthError(e):
   print(e.message, flush=True)
-  if(e.message == "Invalid login credentials"):
-    return redirect(url_for("login", invalidCredentials=True))
+  if(e.message == "Invalid login credentials" or e.message == "Email not confirmed"):
+    return redirect(url_for("login", errorMessage=e.message))
   return "Error"
+
+@app.errorhandler(gotrue.errors.AuthInvalidCredentialsError)
+def handleCredError(e):
+  print(e.message, flush=True)
+  return redirect(url_for("login", errorMessage=e.message))
+
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html'), 404
 
 
 # script entry point

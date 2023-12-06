@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Job Posts</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
+
+  <title>Williamston - Job Posts</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" 
@@ -11,7 +13,7 @@
   
   <style>
     #banner {
-      width: 100%;
+      width: 50%;
       object-fit: cover;
     }
 
@@ -33,25 +35,56 @@
 <body>
   {%include 'navbar.html' %}
   <div class="container">
-    <img class="img-fluid" id="banner" src="/static/banner.gif" width="1280">
-    <h1 class="text-center mt-3 mb-4">Careers at {{company_name}} </h1>
-    <div class="row" style="margin-bottom: 16px">
-      <div class="col-md-7">
-        <p class="lead">
-          {{ contents[-1]['content']}}
-        </p>
-      </div>
-
-      <div class="col-md-5 d-flex justify-content-end">
-        <div class="image-caption-container">
-          <img src="/static/employee.jpg" style="height: 320px; border-radius: 8px">
-
-          <p class="text-center small-caption">Photo by <a href="https://www.brookecagledesign.com/google-x-unsplash">Brooke Cagle</a></p>
-        </div>
-      </div>
+    <div style="text-align: center;">
+      <img class="img-fluid" id="banner" src="/static/banner.jpg">
     </div>
 
-    <h2>Open Positions</h2>
+    <!-- <h1 class="text-center mt-3 mb-4">Careers at {{company_name}} </h1> -->
+    <h3 class="text-center mt-3 mb-4">Employment Opportunities</h3>
+
+    <div class="row" style="margin-bottom: 16px">
+
+      <div class="col-md-0 d-flex">
+        <div class="image-caption-container pe-4">
+          <img src="/static/city-hall.jpg" style="height: 200px; border-radius: 8px">
+
+          <p class="text-center small-caption">Photo courtesy of <a href="https://www.facebook.com/williamstoncity/">Williamston City</a></p>
+        </div>
+
+          <p class="lead">
+            <b>Welcome to the official job listings page for the City of Williamston!</b>
+            <br>
+            We are excited to offer a variety of opportunities to join our dedicated team of public servants.
+            Whether you're looking for a career in public administration, community services, or in a specialized field,
+            we have positions that might be just right for you.
+            <br><br>
+            We are an equal opportunity employer and value diversity at our city government. We welcome applications from all qualified individuals, regardless of background.
+          </p>
+
+          <div class="col-md-2.5 d-flex justify-content-end">
+            <div class="image-caption-container">
+              <img src="/static/employee.jpg" style="height: 200px; border-radius: 8px">
+    
+              <p class="text-center small-caption">Photo by <a href="https://www.brookecagledesign.com/google-x-unsplash">Brooke Cagle</a></p>
+            </div>
+          </div>
+      </div>
+
+      
+        <div class="image-caption-container">
+          <p class="lead">
+          <b>Why Work for Williamston?</b>
+
+        <br>
+        <i>Community Impact</i>: Your work directly contributes to the well-being and improvement of the Williamston community.
+        <br>
+        <i>Growth</i>: We offer numerous opportunities for professional development and career advancement.
+        <br>
+        <i>Employee Benefits</i>: Competitive salaries, health insurance, retirement plans, and more.
+      </p></div>
+    </div>
+
+    <h3>Open Positions</h3>
     <!-- Add pagination links at the bottom of your job list -->
     
     <p>
