@@ -1,9 +1,9 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for
+from database import Database
 from dotenv import load_dotenv
 import base64
 import os
 import sys
-from supabase import create_client
 import gotrue
 from gotrue.errors import AuthApiError
 import psycopg2
@@ -15,14 +15,10 @@ load_dotenv() # Load environment variables from .env
 
 db_url = os.getenv('DATABASE_URL')
 
-supabase_url = os.getenv('SUPABASE_URL')
-supabase_key = os.getenv('SUPABASE_KEY')
-supabase = create_client(supabase_url, supabase_key)
-
 app = Flask(__name__)
 
 COMPANY = 'City of Williamston, Michigan'
-
+supabase = Database()
 
 
 # Function to establish a database connection
@@ -31,33 +27,27 @@ def get_db_connection():
 
 
 def signout():
-  res = supabase.auth.sign_out()
+  res = supabase.getInstance().supabase_client.auth.sign_out()
 
 
 def fetch_jobs_from_database():
   """
     Fetch jobs from the database using Supabase.
     """
-  response = supabase.table("jobs").select(
-    "id, title, location, type, responsibilities, benefits, category, salary, deadline",
-    count='exact').execute()
-
-  if hasattr(response, 'data') and 'error' in response.data:
-    print("Error fetching data:", response.data['error'])
-    return []
+  response = supabase.getInstance().fetch_from_database("jobs")
 
   # Format the salary for each job
-  for job in response.data:
+  for job in response:
     if 'salary' in job and job['salary'] is not None:
       job['salary'] = format_salary(job['salary'])
-    
+
 
   # # Sort the jobs by their 'id' in ascending order
   # sorted_jobs = sorted(response.data, key=lambda x: x['id'])
   # return sorted_jobs
-  
+
   # Reverse the order of jobs
-  reversed_jobs = list(reversed(response.data))
+  reversed_jobs = list(reversed(response))
 
   return reversed_jobs
 
@@ -66,15 +56,19 @@ def fetch_contents_from_database():
   """
     Fetch contents from the database using Supabase.
     """
-  response = supabase.table("contents").select("id, description, content",
-                                               count='exact').execute()
+  response = supabase.getInstance().fetch_from_database("contents")
 
-  if hasattr(response, 'data') and 'error' in response.data:
-    print("Error fetching data:", response.data['error'])
-    return []
+  # Ensure that response is a list of dictionaries
+  if isinstance(response, list):
+      # Iterate over each dictionary in the list
+      for item in response:
+          # Check if 'content' key is present and not None
+          if 'content' in item and item['content'] is not None:
+              # Update 'content' key with line breaks
+              item['content'] = break_line(item['content'])
 
   # Sort the contents by their 'id' in ascending order
-  sorted_contents = sorted(response.data, key=lambda x: x['id'])
+  sorted_contents = sorted(response, key=lambda x: x['id'])
 
   return sorted_contents
 
@@ -83,60 +77,47 @@ def fetch_job_info(job_id):
   """
     Fetch a job from the database using input job_id
   """
-  response = supabase.table("jobs").select(
-    "id, title, location, type, responsibilities, benefits, category, salary, requirements, status, created_at, updated_at, deadline"
-  ).eq("id", job_id).execute()
-  
-
-  if hasattr(response, 'data') and 'error' in response.data:
-    print("Error fetching data:", response.data['error'])
-    return None
-
-  job = response.data[0] if response.data else None
-
-  # Return None immediately if no job is found
-  if not job:
-    return None
+  response = supabase.getInstance().fetch_from_database_by_id("jobs", job_id)
 
   # Format the salary for the job if it exists
-  if job and 'salary' in job and job['salary'] is not None:
-    job['salary'] = format_salary(job['salary'])
+  if response and 'salary' in response and response['salary'] is not None:
+    response['salary'] = format_salary(response['salary'])
 
-  if 'responsibilities' in job and job['responsibilities'] is not None:
-    job['responsibilities'] = break_line(job['responsibilities'])
-  
-  if 'requirements' in job and job['requirements'] is not None:
-    job['requirements'] = break_line(job['requirements'])
+  if 'responsibilities' in response and response['responsibilities'] is not None:
+    response['responsibilities'] = break_line(response['responsibilities'])
 
-  if 'benefits' in job and job['benefits'] is not None:
-    job['benefits'] = break_line(job['benefits'])
+  if 'requirements' in response and response['requirements'] is not None:
+    response['requirements'] = break_line(response['requirements'])
 
-  if 'created_at' in job and job['created_at'] is not None:
+  if 'benefits' in response and response['benefits'] is not None:
+    response['benefits'] = break_line(response['benefits'])
+
+  if 'created_at' in response and response['created_at'] is not None:
     # Parse the string into a datetime object
     # '%Y-%m-%dT%H:%M:%S.%f%z' is the format code matching your date string
-    date_obj = datetime.strptime(job['created_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
+    date_obj = datetime.strptime(response['created_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
 
     # Format the datetime object into a new string format
     # For example, to get 'Month Day, Year - Hour:Minute AM/PM'
     formatted_date = date_obj.strftime('%B %d, %Y - %I:%M %p')
-    job['created_at'] = formatted_date
+    response['created_at'] = formatted_date
 
-  if 'updated_at' in job and job['updated_at'] is not None:
-    date_obj = datetime.strptime(job['updated_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
+  if 'updated_at' in response and response['updated_at'] is not None:
+    date_obj = datetime.strptime(response['updated_at'], '%Y-%m-%dT%H:%M:%S.%f%z')
     formatted_date = date_obj.strftime('%B %d, %Y - %I:%M %p')
-    job['updated_at'] = formatted_date
+    response['updated_at'] = formatted_date
 
-  if 'deadline' in job and job['deadline'] is not None:
+  if 'deadline' in response and response['deadline'] is not None:
     # Parse the string into a datetime object
     # '%Y-%m-%d' is the format code matching your date string (Year-Month-Day)
-    date_obj = datetime.strptime(job['deadline'], '%Y-%m-%d')
+    date_obj = datetime.strptime(response['deadline'], '%Y-%m-%d')
 
     # Format the datetime object into a new string format
     # For example, 'Month Day, Year'
     formatted_date = date_obj.strftime('%B %d, %Y')
-    job['deadline'] = formatted_date
+    response['deadline'] = formatted_date
 
-  return job
+  return response
 
 def format_salary2(salary):
   try:
@@ -168,15 +149,20 @@ def break_line(s):
 
 
 def is_signed_in():
-  return supabase.auth.get_user() != None
-
+  return Database.getInstance().supabase_client.auth.get_user() is not None
 
 def is_admin():
-  if(is_signed_in() == False):
+  if not is_signed_in():
     return False
-  user = supabase.auth.get_user()
-  response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
-  return response.data[0]['admin'] == True
+
+  user = supabase.getInstance().supabase_client.auth.get_user()
+
+  response = Database.getInstance().supabase_client.table('users') \
+    .select('admin') \
+    .eq("email", user.user.email) \
+    .execute()
+
+  return response.data[0]['admin'] if response.data else False
 
 @app.route("/")
 @app.route("/home")
@@ -201,7 +187,7 @@ def home():
 
   # Calculate the total number of pages
   total_pages = (len(jobs) + jobs_per_page - 1) // jobs_per_page
-  
+
   return render_template('home.html',
                          jobs=jobs_for_page,
                          total_pages=total_pages,
@@ -211,38 +197,48 @@ def home():
                          signedIn=signedIn,
                          admin=admin)
 
-
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
-  if(request.method == "GET"):
-    return render_template("signup.html", signedIn=False)
-  if(request.method == "POST"):
-    email = request.form['email']
-    password = request.form['password']
-    res = supabase.auth.sign_up({
-      "email": email,
-      "password": password,
-    })
-    supabase.table('users').insert({
-      "email": email,
-      "admin": False
-    }).execute()
-    return redirect(url_for("email_confirm"))
-  return redirect("/")
-    
+    if request.method == "GET":
+        return render_template("signup.html", signedIn=False)
+
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+
+        # Use Database.getInstance() to get the instance and perform user signup
+        db_instance = Database.getInstance()
+        db_instance.supabase_client.auth.sign_up({
+            "email": email,
+            "password": password,
+        })
+
+        # Insert user data into the 'users' table
+        db_instance.insert_to_database('users', {
+            "email": email,
+            "admin": False
+        })
+        return redirect(url_for("email_confirm"))
+
+    return redirect("/")
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
   if(request.method == "GET"):
     if(is_signed_in() == True):
       return redirect("/")
+
     error = None if request.args.get("errorMessage") is None else request.args.get("errorMessage")
+
     if(error is not None):
       return render_template("login.html", signedIn=False, errorMessage=error, admin=False)
+
     return render_template("login.html", signedIn=False, errorMessage=None, admin=False)
+
   email = request.form.get('email')
   password = request.form.get('password')
-  data = supabase.auth.sign_in_with_password({
+  data = supabase.getInstance().supabase_client.auth.sign_in_with_password({
     "email": email, 
     "password": password
   })
@@ -251,8 +247,8 @@ def login():
 
 @app.route("/logout", methods=['POST'])
 def logout():
-  res = supabase.auth.sign_out()
-  return redirect("/")
+    res = Database.getInstance().supabase_client.auth.sign_out()
+    return redirect("/")
 
 
 @app.route("/email-confirm")
@@ -270,43 +266,43 @@ def job_list():
 
 @app.route("/job-post-manager")
 def job_post_manager():
-  if(is_signed_in() == False):
-    return redirect("/")
-  
-  elif(is_signed_in() == True):
-    user = supabase.auth.get_user()
-    response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
+    if not is_signed_in():
+        return redirect("/")
 
-    if(response.data[0]['admin'] != True):
-      return redirect("/")
+    user = supabase.getInstance().supabase_client.auth.get_user()
 
-  return render_template('job-post-manager.html', signedIn = True, admin = True)
+    # Fetch user data from the 'users' table using the Database class
+    user_data = supabase.getInstance().auth_by_email('users', user.user.email)
 
+    if user_data and user_data.get('admin') is True:
+        return render_template('job-post-manager.html', signedIn=True, admin=True)
+    else:
+        return redirect("/")
 
 
 @app.route("/job-application-manager")
 def job_application_manager():
-  if(is_signed_in() == False):
-    return redirect("/")
-  
-  elif(is_signed_in() == True):
-    user = supabase.auth.get_user()
-    response = supabase.table('users').select('admin').eq("email", user.user.email).execute()
+    if not is_signed_in():
+        return redirect("/")
 
-    if(response.data[0]['admin'] != True):
+    user = supabase.getInstance().supabase_client.auth.get_user()
+    user_data = supabase.getInstance().auth_by_email("users", user.user.email)
+
+    if user_data and user_data.get('admin') is True:
       return redirect("/")
-    
-  return render_template('job-application-manager.html', signedIn = True, admin = True)
+
+    return render_template('job-application-manager.html', signedIn=True, admin=True)
+
 
 
 @app.route("/application/<int:id>", methods=['GET', 'POST'])
 def get_job_info(id):
     job = fetch_job_info(id)
-    
+
     if job is None:
         # Handle the case when job is None, e.g., show an error message or redirect
         return render_template('404.html'), 404
-    
+
     if request.method == "POST":
         name = request.form.get("inputName")
         email = request.form.get("inputEmail")

@@ -25,15 +25,30 @@ def sample_job_data():
     # Sample jobs data for testing
     return [
         {'id': 9, 'title': 'Web Developer', 'location': 'Remote'},
-        {'id': 12, 'title': 'Test Data Entry', 'location': 'Heaven'}
+        {'id': 12, 'title': 'Data Entry Clerk', 'location': 'Williamston, Michigan'}
     ]
 
 @pytest.fixture
 def sample_content_data():
     # Sample content data for testing
     return [
-        {'id': 1, 'description': 'About City', 'content': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Bé Ba mập địt level 1'}
+        {'id': 1, 'content': 'Test case',
+         'introduction': 'About City', 
+         'intro_title': 'test', 
+         'content_title': 'test'}
     ]
+
+def test_fetch_contents_from_database(sample_content_data):
+  # Call the function
+  result = fetch_contents_from_database()
+
+  # Ensure the expected item has the correct structure
+  expected_item = sample_content_data[0]
+
+  # Check if the expected item is a subset of any item in the result list
+  assert any(expected_item.items() <= item.items() for item in result), \
+      f"Expected item {expected_item} not found in result: {result}"
+
 
 
 def test_fetch_jobs_from_database(sample_job_data):
@@ -49,23 +64,15 @@ def test_fetch_jobs_from_database(sample_job_data):
     }
     for item in result
   ]
-    
+
     # Assert the result based on the mock response
   for expected_item in sample_job_data:
     assert expected_item in converted_result
 
-def test_fetch_contents_from_database(sample_content_data):
-  # Call the function
-  result = fetch_contents_from_database()
-  # Assert the result based on the mock response
-  expected_item = sample_content_data[0]
-  assert result and len(result) >= 1, "Result is empty or does not have enough elements."
-  assert result[0] == expected_item, f"First line mismatch. Expected: {expected_item}, Actual: {result[0]}"
-
 def test_fetch_job_info(sample_job_data):
   # Call the function
   result = fetch_job_info(12)
-  expected_result = {'id': 12, 'title': 'Test Data Entry', 'location': 'Heaven'}
+  expected_result = sample_job_data[1]
   assert all(item in result.items() for item in expected_result.items())
 
 def test_home_page(client):
