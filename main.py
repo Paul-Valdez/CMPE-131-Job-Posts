@@ -282,16 +282,18 @@ def job_post_manager():
 
 @app.route("/job-application-manager")
 def job_application_manager():
-    if not is_signed_in():
-        return redirect("/")
+  if not is_signed_in():
+    return redirect("/")
 
-    user = supabase.getInstance().supabase_client.auth.get_user()
-    user_data = supabase.getInstance().auth_by_email("users", user.user.email)
+  user = supabase.getInstance().supabase_client.auth.get_user()
 
-    if user_data and user_data.get('admin') is True:
-      return redirect("/")
+  # Fetch user data from the 'users' table using the Database class
+  user_data = supabase.getInstance().auth_by_email('users', user.user.email)
 
+  if user_data and user_data.get('admin') is True:
     return render_template('job-application-manager.html', signedIn=True, admin=True)
+  else:
+    return redirect("/")
 
 
 
