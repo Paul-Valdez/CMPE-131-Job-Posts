@@ -1,18 +1,33 @@
 <div class="border-bottom row" style="margin-bottom: 16px; padding-bottom: 4px">
   <div class="col-9">
-    <h4 style="color: rgb(100, 100, 100); margin-bottom: 4px">{{job['title']}}</h4>
+    <h5 style="color: rgb(0, 0, 255); margin-bottom: 4px">
+      <a href="/application/{{job['id']}}">{{job['title']}}</a>
+      </h5>
      
-    <div><b>Location:</b> 
+    <div><b>Location:</b>
       {% if job['location'] != "" %}
         {{job['location']}}
-      {% else %} To be announced
+      {% else %} To Be Determined
       {% endif %}
     </div>
-    {% if job['salary'] != None %}
-      <div><b>Salary:</b> {{job['salary']}}</div>
+
+    <div><b>Salary:</b>
+      {% if job['salary'] is none or job['salary'] == "$0" %}
+        To Be Negotiated
+      {% else %}
+        {{job['salary']}}
+      {% endif %}
+    </div>
+
+    
+    {% if job['type'] is not none %}
+      <div><b>Type:</b>
+          {{ job['type'] }}
+      </div>
     {% endif %}
   </div>
-  <div class="col-3">
+
+  <div class="col-3 d-flex justify-content-end">
     <a href="/application/{{job['id']}}">
       <button type="button" class="btn btn-primary">Click to apply</button>
     </a>

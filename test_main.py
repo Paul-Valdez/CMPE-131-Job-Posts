@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from main import hello_world, fetch_jobs_from_database, fetch_contents_from_database, fetch_job_info, app
+from main import home, fetch_jobs_from_database, fetch_contents_from_database, fetch_job_info, app
 from dotenv import load_dotenv
 from supabase import create_client
 import os
