@@ -53,23 +53,16 @@
 
       <div class = "col-md-7">
         <p class = "lead">
-          <b>Welcome to the official job listings page for the City of Williamston!</b>
+          <b>{{contents[-1]['intro_title']}}</b>
         </p>
         <p class = "lead">
-          We are excited to offer a variety of opportunities to join our dedicated team of public servants.
-          Whether you're looking for a career in public administration, community services, or in a specialized field,
-          we have positions that might be just right for you.
-          <br><br> We are an equal opportunity employer and value diversity at our city government. We welcome applications from all qualified individuals, regardless of background.
+          {{ contents[-1]['description']}}
         </p>
         <p class = "lead">
-          <b><br>Why Work for Williamston?</b>
+          <b>{{contents[-1]['content_title']}}</b>
         </p>
         <p class = "lead">
-          <i>Community Impact</i>: Your work directly contributes to the well-being and improvement of the Williamston community.
-          <br>
-          <i>Growth</i>: We offer numerous opportunities for professional development and career advancement.
-          <br>
-          <i>Employee Benefits</i>: Competitive salaries, health insurance, retirement plans, and more.
+          {{ contents[-1]['content']|safe}}
         </p>
       </div>
       

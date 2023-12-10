@@ -33,7 +33,7 @@ def sample_content_data():
     # Sample content data for testing
     return [
         {'id': 1, 'content': 'Test case',
-         'introduction': 'About City', 
+         'description': 'About City', 
          'intro_title': 'test', 
          'content_title': 'test'}
     ]
