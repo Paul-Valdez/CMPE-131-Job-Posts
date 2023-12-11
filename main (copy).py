@@ -1,6 +1,5 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for
 from database import Database
-from database import Database
 from dotenv import load_dotenv
 import base64
 import os
@@ -20,17 +19,15 @@ app = Flask(__name__)
 
 COMPANY = 'City of Williamston, Michigan'
 supabase = Database()
-supabase = Database()
 
 
 # Function to establish a database connection
 def get_db_connection():
     return psycopg2.connect(db_url)
 
-@app.route("/logout", methods=['POST'])
-def logout():
-  res = Database.getInstance().supabase_client.auth.sign_out()
-  return redirect("/home")
+
+def signout():
+  res = supabase.getInstance().supabase_client.auth.sign_out()
 
 
 def fetch_jobs_from_database():
@@ -38,23 +35,18 @@ def fetch_jobs_from_database():
     Fetch jobs from the database using Supabase.
     """
   response = supabase.getInstance().fetch_from_database("jobs")
-  response = supabase.getInstance().fetch_from_database("jobs")
 
   # Format the salary for each job
   for job in response:
-  for job in response:
     if 'salary' in job and job['salary'] is not None:
       job['salary'] = format_salary(job['salary'])
-
 
 
   # # Sort the jobs by their 'id' in ascending order
   # sorted_jobs = sorted(response.data, key=lambda x: x['id'])
   # return sorted_jobs
 
-
   # Reverse the order of jobs
-  reversed_jobs = list(reversed(response))
   reversed_jobs = list(reversed(response))
 
   return reversed_jobs
@@ -64,31 +56,21 @@ def fetch_contents_from_database():
   """
     Fetch contents from the database using Supabase.
     """
-  # response = supabase.getInstance().fetch_from_database("homepage_content")
+  response = supabase.getInstance().fetch_from_database("contents")
 
-  # # Ensure that response is a list of dictionaries
-  # if isinstance(response, list):
-  #     # Iterate over each dictionary in the list
-  #     for item in response:
-  #         # Check if 'content' key is present and not None
-  #         if 'content' in item and item['content'] is not None:
-  #             # Update 'content' key with line breaks
-  #             item['content'] = break_line(item['content'])
+  # Ensure that response is a list of dictionaries
+  if isinstance(response, list):
+      # Iterate over each dictionary in the list
+      for item in response:
+          # Check if 'content' key is present and not None
+          if 'content' in item and item['content'] is not None:
+              # Update 'content' key with line breaks
+              item['content'] = break_line(item['content'])
 
-  # # Sort the contents by their 'id' in ascending order
-  # sorted_contents = sorted(response, key=lambda x: x['id'])
+  # Sort the contents by their 'id' in ascending order
+  sorted_contents = sorted(response, key=lambda x: x['id'])
 
-  # return sorted_contents
-
-  # Fetch only the description column of the latest entry
-  response = supabase.table("contents").select("description").limit(1).order("id", desc=True).execute()
-
-  if hasattr(response, 'data') and 'error' in response.data:
-      print("Error fetching data:", response.data['error'])
-      return None
-
-  # Return the description of the latest entry
-  return response.data[0]['description'] if response.data else None
+  return sorted_contents
 
 
 def fetch_job_info(job_id):
@@ -96,19 +78,11 @@ def fetch_job_info(job_id):
     Fetch a job from the database using input job_id
   """
   response = supabase.getInstance().fetch_from_database_by_id("jobs", job_id)
-  response = supabase.getInstance().fetch_from_database_by_id("jobs", job_id)
 
   # Format the salary for the job if it exists
   if response and 'salary' in response and response['salary'] is not None:
     response['salary'] = format_salary(response['salary'])
-  if response and 'salary' in response and response['salary'] is not None:
-    response['salary'] = format_salary(response['salary'])
 
-  if 'responsibilities' in response and response['responsibilities'] is not None:
-    response['responsibilities'] = break_line(response['responsibilities'])
-
-  if 'requirements' in response and response['requirements'] is not None:
-    response['requirements'] = break_line(response['requirements'])
   if 'responsibilities' in response and response['responsibilities'] is not None:
     response['responsibilities'] = break_line(response['responsibilities'])
 
@@ -137,16 +111,22 @@ def fetch_job_info(job_id):
     # Parse the string into a datetime object
     # '%Y-%m-%d' is the format code matching your date string (Year-Month-Day)
     date_obj = datetime.strptime(response['deadline'], '%Y-%m-%d')
-    date_obj = datetime.strptime(response['deadline'], '%Y-%m-%d')
 
     # Format the datetime object into a new string format
     # For example, 'Month Day, Year'
     formatted_date = date_obj.strftime('%B %d, %Y')
     response['deadline'] = formatted_date
-    response['deadline'] = formatted_date
 
   return response
 
+def format_salary2(salary):
+  try:
+    # Convert salary to float and format it without cents
+    formatted_salary = f"${float(salary):,.0f}"
+    return formatted_salary
+  except (ValueError, TypeError):
+    # Return the original salary if there's an issue formatting
+    return salary
 
 def format_salary(salary):
   try:
@@ -170,21 +150,10 @@ def break_line(s):
 
 def is_signed_in():
   return Database.getInstance().supabase_client.auth.get_user() is not None
-  return Database.getInstance().supabase_client.auth.get_user() is not None
 
 def is_admin():
   if not is_signed_in():
-  if not is_signed_in():
     return False
-
-  user = supabase.getInstance().supabase_client.auth.get_user()
-
-  response = Database.getInstance().supabase_client.table('users') \
-    .select('admin') \
-    .eq("email", user.user.email) \
-    .execute()
-
-  return response.data[0]['admin'] if response.data else False
 
   user = supabase.getInstance().supabase_client.auth.get_user()
 
@@ -199,7 +168,7 @@ def is_admin():
 @app.route("/home")
 def home():
   jobs = fetch_jobs_from_database()
-  homepage_content = supabase.getInstance().fetch_homepage()
+  contents = fetch_contents_from_database()
   signedIn = is_signed_in()
   admin = is_admin()
 
@@ -219,12 +188,11 @@ def home():
   # Calculate the total number of pages
   total_pages = (len(jobs) + jobs_per_page - 1) // jobs_per_page
 
-
   return render_template('home.html',
                          jobs=jobs_for_page,
                          total_pages=total_pages,
                          current_page=page,
-                         contents=homepage_content,
+                         contents=contents,
                          company_name=COMPANY,
                          signedIn=signedIn,
                          admin=admin)
@@ -261,25 +229,26 @@ def login():
     if(is_signed_in() == True):
       return redirect("/")
 
-
     error = None if request.args.get("errorMessage") is None else request.args.get("errorMessage")
-
 
     if(error is not None):
       return render_template("login.html", signedIn=False, errorMessage=error, admin=False)
 
-
     return render_template("login.html", signedIn=False, errorMessage=None, admin=False)
-
 
   email = request.form.get('email')
   password = request.form.get('password')
-  data = supabase.getInstance().supabase_client.auth.sign_in_with_password({
   data = supabase.getInstance().supabase_client.auth.sign_in_with_password({
     "email": email, 
     "password": password
   })
   return redirect("/")
+
+
+@app.route("/logout", methods=['POST'])
+def logout():
+    res = Database.getInstance().supabase_client.auth.sign_out()
+    return redirect("/")
 
 
 @app.route("/email-confirm")
@@ -295,24 +264,34 @@ def job_list():
   return jsonify(jobs)
 
 
-@app.route("/admin-module")
-def admin_module():
+@app.route("/job-post-manager")
+def job_post_manager():
     if not is_signed_in():
-        return redirect("/home")  
+        return redirect("/")
 
     user = supabase.getInstance().supabase_client.auth.get_user()
 
-    if user:
-      # Fetch user data from the 'users' table using the Database class
-      user_data = supabase.getInstance().auth_by_email('users', user.user.email)
+    # Fetch user data from the 'users' table using the Database class
+    user_data = supabase.getInstance().auth_by_email('users', user.user.email)
 
-      if user_data and user_data.get('admin') is True:
-          return render_template('admin-module.html', signedIn=True, admin=True)
-      else:
-          return redirect("/home")
+    if user_data and user_data.get('admin') is True:
+        return render_template('job-post-manager.html', signedIn=True, admin=True)
     else:
-      return redirect("/home")
+        return redirect("/")
 
+
+@app.route("/job-application-manager")
+def job_application_manager():
+    if not is_signed_in():
+        return redirect("/")
+
+    user = supabase.getInstance().supabase_client.auth.get_user()
+    user_data = supabase.getInstance().auth_by_email("users", user.user.email)
+
+    if user_data and user_data.get('admin') is True:
+      return redirect("/")
+
+    return render_template('job-application-manager.html', signedIn=True, admin=True)
 
 
 
@@ -320,11 +299,9 @@ def admin_module():
 def get_job_info(id):
     job = fetch_job_info(id)
 
-
     if job is None:
         # Handle the case when job is None, e.g., show an error message or redirect
         return render_template('404.html'), 404
-
 
     if request.method == "POST":
         name = request.form.get("inputName")

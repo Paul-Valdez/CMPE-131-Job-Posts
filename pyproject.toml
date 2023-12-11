@@ -12,6 +12,8 @@ python-dotenv = "^1.0.0"
 git-python = "^1.0.3"
 pytest = "^7.4.3"
 requests = "^2.31.0"
+psycopg2 = "^2.9.9"
+consultor = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 
