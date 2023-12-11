@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Module</title>
+  <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
+
+  <script src="https://cdn.tryretool.com/embed.js"></script>.
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" 
+    rel="stylesheet" 
+    integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" 
+    crossorigin="anonymous">
+
+  <style>
+    #container {
+      width: 100%; /* Full width */
+      /* Height will be set by JavaScript */
+    }
+  </style>
+</head>
+
+<body>
+
+  {% include 'navbar.html' %}
+  <div id="container"></div>
+
+  <script>
+    function adjustContainerHeight() {
+      var navbarHeight = document.querySelector('.navbar').offsetHeight;
+      var container = document.getElementById('container');
+      var viewportHeight = window.innerHeight;
+      container.style.height = (viewportHeight - navbarHeight - 6) + 'px';
+    }
+
+    window.onload = adjustContainerHeight;
+    window.onresize = adjustContainerHeight; // Adjust height on window resize
+
+    var rt = window.retool.RetoolDashboard(
+      document.getElementById('container'),
+      'https://paulvaldez.retool.com/embedded/public/0ddd78bc-0add-4235-bc7d-341dd24d4dec'
+    );
+  </script>
+</body>
+</html>

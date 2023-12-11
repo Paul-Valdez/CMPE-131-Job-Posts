@@ -1,22 +1,18 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for
-from database import Database
 from dotenv import load_dotenv
-import base64
-import os
-import sys
-import gotrue
+import base64, os, sys, gotrue
+from supabase import create_client
 from gotrue.errors import AuthApiError
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime
-
+from database import Database
 
 load_dotenv() # Load environment variables from .env
 
 db_url = os.getenv('DATABASE_URL')
 
 app = Flask(__name__)
-
 COMPANY = 'City of Williamston, Michigan'
 supabase = Database()
 
@@ -25,9 +21,10 @@ supabase = Database()
 def get_db_connection():
     return psycopg2.connect(db_url)
 
-
-def signout():
-  res = supabase.getInstance().supabase_client.auth.sign_out()
+@app.route("/logout", methods=['POST'])
+def logout():
+  res = Database.getInstance().supabase_client.auth.sign_out()
+  return redirect("/home")
 
 
 def fetch_jobs_from_database():
@@ -41,36 +38,47 @@ def fetch_jobs_from_database():
     if 'salary' in job and job['salary'] is not None:
       job['salary'] = format_salary(job['salary'])
 
-
   # # Sort the jobs by their 'id' in ascending order
   # sorted_jobs = sorted(response.data, key=lambda x: x['id'])
   # return sorted_jobs
 
   # Reverse the order of jobs
-  reversed_jobs = list(reversed(response))
+  # reversed_jobs = list(reversed(response))
 
-  return reversed_jobs
+  # return reversed_jobs
+
+  return response
 
 
 def fetch_contents_from_database():
   """
     Fetch contents from the database using Supabase.
     """
-  response = supabase.getInstance().fetch_from_database("contents")
+  # response = supabase.getInstance().fetch_from_database("homepage_content")
 
-  # Ensure that response is a list of dictionaries
-  if isinstance(response, list):
-      # Iterate over each dictionary in the list
-      for item in response:
-          # Check if 'content' key is present and not None
-          if 'content' in item and item['content'] is not None:
-              # Update 'content' key with line breaks
-              item['content'] = break_line(item['content'])
+  # # Ensure that response is a list of dictionaries
+  # if isinstance(response, list):
+  #     # Iterate over each dictionary in the list
+  #     for item in response:
+  #         # Check if 'content' key is present and not None
+  #         if 'content' in item and item['content'] is not None:
+  #             # Update 'content' key with line breaks
+  #             item['content'] = break_line(item['content'])
 
-  # Sort the contents by their 'id' in ascending order
-  sorted_contents = sorted(response, key=lambda x: x['id'])
+  # # Sort the contents by their 'id' in ascending order
+  # sorted_contents = sorted(response, key=lambda x: x['id'])
 
-  return sorted_contents
+  # return sorted_contents
+
+  # Fetch only the description column of the latest entry
+  response = supabase.table("contents").select("description").limit(1).order("id", desc=True).execute()
+
+  if hasattr(response, 'data') and 'error' in response.data:
+      print("Error fetching data:", response.data['error'])
+      return None
+
+  # Return the description of the latest entry
+  return response.data[0]['description'] if response.data else None
 
 
 def fetch_job_info(job_id):
@@ -119,14 +127,6 @@ def fetch_job_info(job_id):
 
   return response
 
-def format_salary2(salary):
-  try:
-    # Convert salary to float and format it without cents
-    formatted_salary = f"${float(salary):,.0f}"
-    return formatted_salary
-  except (ValueError, TypeError):
-    # Return the original salary if there's an issue formatting
-    return salary
 
 def format_salary(salary):
   try:
@@ -151,6 +151,7 @@ def break_line(s):
 def is_signed_in():
   return Database.getInstance().supabase_client.auth.get_user() is not None
 
+
 def is_admin():
   if not is_signed_in():
     return False
@@ -164,11 +165,12 @@ def is_admin():
 
   return response.data[0]['admin'] if response.data else False
 
+
 @app.route("/")
 @app.route("/home")
 def home():
   jobs = fetch_jobs_from_database()
-  contents = fetch_contents_from_database()
+  contents = supabase.getInstance().fetch_homepage()
   signedIn = is_signed_in()
   admin = is_admin()
 
@@ -197,30 +199,24 @@ def home():
                          signedIn=signedIn,
                          admin=admin)
 
+
 @app.route("/signup", methods=['GET', 'POST'])
 def signup():
-    if request.method == "GET":
-        return render_template("signup.html", signedIn=False)
-
-    if request.method == "POST":
-        email = request.form['email']
-        password = request.form['password']
-
-        # Use Database.getInstance() to get the instance and perform user signup
-        db_instance = Database.getInstance()
-        db_instance.supabase_client.auth.sign_up({
-            "email": email,
-            "password": password,
-        })
-
-        # Insert user data into the 'users' table
-        db_instance.insert_to_database('users', {
-            "email": email,
-            "admin": False
-        })
-        return redirect(url_for("email_confirm"))
-
-    return redirect("/")
+  if(request.method == "GET"):
+    return render_template("signup.html", signedIn=False)
+  if(request.method == "POST"):
+    email = request.form['email']
+    password = request.form['password']
+    res = supabase.auth.sign_up({
+      "email": email,
+      "password": password,
+    })
+    supabase.table('users').insert({
+      "email": email,
+      "admin": False
+    }).execute()
+    return redirect(url_for("email_confirm"))
+  return redirect("/")
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -229,10 +225,13 @@ def login():
     if(is_signed_in() == True):
       return redirect("/")
 
+
     error = None if request.args.get("errorMessage") is None else request.args.get("errorMessage")
+
 
     if(error is not None):
       return render_template("login.html", signedIn=False, errorMessage=error, admin=False)
+
 
     return render_template("login.html", signedIn=False, errorMessage=None, admin=False)
 
@@ -243,12 +242,6 @@ def login():
     "password": password
   })
   return redirect("/")
-
-
-@app.route("/logout", methods=['POST'])
-def logout():
-    res = Database.getInstance().supabase_client.auth.sign_out()
-    return redirect("/")
 
 
 @app.route("/email-confirm")
@@ -264,37 +257,23 @@ def job_list():
   return jsonify(jobs)
 
 
-@app.route("/job-post-manager")
-def job_post_manager():
+@app.route("/admin-module")
+def admin_module():
     if not is_signed_in():
         return redirect("/")
 
     user = supabase.getInstance().supabase_client.auth.get_user()
 
+    if not user:
+        return redirect("/")
+
     # Fetch user data from the 'users' table using the Database class
     user_data = supabase.getInstance().auth_by_email('users', user.user.email)
 
     if user_data and user_data.get('admin') is True:
-        return render_template('job-post-manager.html', signedIn=True, admin=True)
+        return render_template('admin-module.html', signedIn=True, admin=True)
     else:
         return redirect("/")
-
-
-@app.route("/job-application-manager")
-def job_application_manager():
-  if not is_signed_in():
-    return redirect("/")
-
-  user = supabase.getInstance().supabase_client.auth.get_user()
-
-  # Fetch user data from the 'users' table using the Database class
-  user_data = supabase.getInstance().auth_by_email('users', user.user.email)
-
-  if user_data and user_data.get('admin') is True:
-    return render_template('job-application-manager.html', signedIn=True, admin=True)
-  else:
-    return redirect("/")
-
 
 
 @app.route("/application/<int:id>", methods=['GET', 'POST'])

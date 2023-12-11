@@ -4,6 +4,7 @@
   <link rel="icon" href="{{ url_for('static', filename='logo.ico') }}">
 
   <title>Williamston - Job Posts</title>
+
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" 
@@ -13,7 +14,7 @@
   
   <style>
     #banner {
-      width: 50%;
+      width: 80%;
       object-fit: cover;
     }
 
@@ -21,83 +22,94 @@
       class = "mt-3 mb-4";
     }
 
-    .image-caption-container {
-      text-align: center; /* Center-align the image and caption */
-      max-width: fit-content; /* Ensure the container fits the content's width */
-    }
-
     .small-caption {
       font-size: 10px; /* or any small size you prefer */
+    }
+    
+    .pagination a::before {
+        content: '\00a0'; /* Unicode for non-breaking space */
+    }
+
+    .image-caption-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    }
+
+    .align-left {
+        align-self: flex-start;
+    }
+
+    .align-center {
+        align-self: center;
+    }
+
+    .align-right {
+        align-self: flex-end;
+    }
+
+    .fixed-size {
+    width: 200px; /* Set the desired width */
+    height: 200px; /* Set the desired height */
+    object-fit: cover; /* This will crop the image to fill the dimensions */
+    border-radius: 8px; /* Adding border-radius for consistency */
+    }
+
+    .image-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .caption-container {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .caption {
+      flex-grow: 1;
+      text-align: center; /* Adjust as needed */
     }
   </style>
 </head>
 
 <body>
   {%include 'navbar.html' %}
+
+  <br><br>
+  
   <div class="container">
-    <div style="text-align: center;">
-      <img class="img-fluid" id="banner" src="/static/banner.jpg">
+
+    <div class="image-caption-container d-flex justify-content-between mb-2">
+      <img class="fixed-size" src="/static/city-hall.jpg">
+      <img class="align-center img-fluid" id="banner" src="/static/banner.jpg">
+      <img class="fixed-size" src="/static/employee.jpg">
+    </div>
+  
+    <!-- Flex container for captions -->
+    <div class="caption-container d-flex justify-content-between">
+      <div style="flex-grow: 1; text-align: left;">
+        <p style="font-size: 10px;">Photo courtesy of <a href="https://www.facebook.com/williamstoncity/">Williamston City</a></p>
+      </div>
+
+      <div style="flex-grow: 1; text-align: right;">
+        <p style="font-size: 10px;">Photo by <a href="https://www.brookecagledesign.com/google-x-unsplash">Brooke Cagle</a></p>
+      </div>
     </div>
 
-    <!-- <h1 class="text-center mt-3 mb-4">Careers at {{company_name}} </h1> -->
-    <h3 class="text-center mt-3 mb-4">Employment Opportunities</h3>
+    <div style="width: 100%; margin: auto;">
+      <h3 style="text-align: center; margin-top: 0px; margin-bottom: 16px;">Employment Opportunities</h3>
 
-    <div class="row" style="margin-bottom: 16px">
-      <div class="d-none d-md-block col-md-2">
-        <div class="image-caption-container pe-4">
-          <img src="/static/city-hall.jpg" style="height: 200px; border-radius: 8px">
-        
-          <p class="text-center small-caption">Photo courtesy of <a href="https://www.facebook.com/williamstoncity/">Williamston City</a></p>
-        </div>
-      </div>
-
-      <div class = "col-md-7">
-        <p class = "lead">
-          <b>Welcome to the official job listings page for the City of Williamston!</b>
-        </p>
-        <p class = "lead">
-          We are excited to offer a variety of opportunities to join our dedicated team of public servants.
-          Whether you're looking for a career in public administration, community services, or in a specialized field,
-          we have positions that might be just right for you.
-          <br><br> We are an equal opportunity employer and value diversity at our city government. We welcome applications from all qualified individuals, regardless of background.
-        </p>
-        <p class = "lead">
-          <b><br>Why Work for Williamston?</b>
-        </p>
-        <p class = "lead">
-          <i>Community Impact</i>: Your work directly contributes to the well-being and improvement of the Williamston community.
-          <br>
-          <i>Growth</i>: We offer numerous opportunities for professional development and career advancement.
-          <br>
-          <i>Employee Benefits</i>: Competitive salaries, health insurance, retirement plans, and more.
-        </p>
-      </div>
+      <!-- Displays latest entry in "contents" table -->
+      <div>{{contents | safe}}</div>
+    </div>
       
-        <div class="d-none d-md-block col-md-3">
-            <div class="image-caption-container">
-              <img src="/static/employee.jpg" style="height: 200px; border-radius: 8px">
+    <h3 style="text-align: center; margin-top: 24px; margin-bottom: 16px;">Open Positions</h3>
     
-              <p class="text-center small-caption">Photo by <a href="https://www.brookecagledesign.com/google-x-unsplash">Brooke Cagle</a></p>
-            </div>
-          </div>
-      </div>
-
-      
-
-    <h3>Open Positions</h3>
-    <!-- Add pagination links at the bottom of your job list -->
-    
-    <p>
-      {% for job in jobs %}
-        {% include 'joblist.html' %}
-      {% endfor %}
-    </p>
-
-    <style>
-      .pagination a::before {
-        content: '\00a0'; /* Unicode for non-breaking space */
-      }
-    </style>
+    <!-- Display jobs list -->
+    {% for job in jobs %}
+      {% include 'joblist.html' %}
+    {% endfor %}
 
     <div class="pagination d-flex justify-content-center">
       <p>Page:
@@ -112,7 +124,7 @@
     </div>
     
     {%include 'footer.html' %}
-    
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
