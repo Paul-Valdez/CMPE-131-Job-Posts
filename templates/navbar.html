@@ -21,7 +21,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm" aria-label="Eighth navbar example">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <img src="/static/logo.ico" alt="" width="30" height="24">
+                <img src="/static/logo.ico" alt="" width="30" height="30">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsExample07" aria-controls="navbarsExample07" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -35,11 +35,7 @@
 
                     {% if signedIn == true and admin == true %}
                         <li class="nav-item">
-                            <a class="nav-link glow-link" id="navJobPostManager" href="/job-post-manager">Job Post Manager</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link glow-link" id="navJobApplicationManager" href="/job-application-manager">Job Application Manager</a>
+                            <a class="nav-link glow-link" id="navAdminModule" href="/admin-module">Admin Module</a>
                         </li>
                     {% endif %}
 
@@ -65,7 +61,7 @@
         </div>
     </nav>
 
-    <div style="height: 56px"></div>
+    <div style="height: 35px"></div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -110,8 +106,7 @@
             const currentPath = window.location.pathname;
             const navLinks = {
                 '/': 'navHome',
-                '/job-post-manager': 'navJobPostManager',
-                '/job-application-manager': 'navJobApplicationManager',
+                '/admin-module': 'navAdminModule',
                 '/login': 'navLogin',
                 '/signup': 'navSignup'
             };
